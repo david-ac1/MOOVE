@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Alternative Pathway Comparison - Moove</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#FF5C00",
+                        "accent": "#00F0FF",
+                        "dark-bg": "#0D0D0D",
+                        "card-bg": "#1A1A1A",
+                    },
+                    fontFamily: {
+                        "sans": ["Plus Jakarta Sans", "sans-serif"],
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "2xl": "1.5rem",
+                        "3xl": "2.5rem"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body { 
+                @apply bg-[#FDFCFB] text-slate-900 overflow-x-hidden;
+                background-image: 
+                    radial-gradient(circle at 10% 20%, rgba(255, 92, 0, 0.03) 0%, transparent 20%),
+                    radial-gradient(circle at 90% 80%, rgba(0, 240, 255, 0.03) 0%, transparent 20%);
+            }
+        }
+        .cow-patch-bg {
+            background-color: #f8f9fa;
+            background-image: radial-gradient(#dee2e6 2px, transparent 2px);
+            background-size: 32px 32px;
+            position: relative;
+        }
+        .cow-patch-bg::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 15% 25%, #e9ecef 80px, transparent 100px),
+                radial-gradient(circle at 85% 65%, #e9ecef 120px, transparent 140px),
+                radial-gradient(circle at 45% 85%, #e9ecef 60px, transparent 80px);
+            z-index: -1;
+            opacity: 0.6;
+        }
+        .pop-bubble {
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
+        }
+        .glass-card {
+            @apply backdrop-blur-md bg-white/80 border border-white transition-all duration-300;
+        }
+        .comparison-card {
+            @apply relative overflow-hidden transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl;
+        }
+        .comparison-card.active {
+            @apply ring-4 ring-primary shadow-2xl scale-[1.02] z-10;
+        }
+        .winged-cow-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .cow-body {
+            width: 24px;
+            height: 18px;
+            background-color: currentColor;
+            border-radius: 4px;
+            position: relative;
+        }
+        .cow-wing-l, .cow-wing-r {
+            position: absolute;
+            width: 12px;
+            height: 8px;
+            background-color: #FF5C00;
+            top: -4px;
+            border-radius: 10px 10px 0 0;
+        }
+        .cow-wing-l { left: -4px; transform: rotate(-30deg); }
+        .cow-wing-r { right: -4px; transform: rotate(30deg); }
+    </style>
+</head>
+<body class="cow-patch-bg">
+<div class="relative flex h-auto min-h-screen w-full flex-col">
+<header class="flex items-center justify-between px-6 md:px-12 py-5 sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-slate-200">
+<div class="flex items-center gap-10">
+<div class="flex items-center gap-3">
+<div class="size-10 flex items-center justify-center bg-black rounded-xl rotate-3 relative overflow-hidden">
+<div class="text-white flex items-center justify-center">
+<svg class="w-8 h-8" fill="none" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+<rect fill="white" height="14" rx="3" width="20" x="10" y="14"></rect>
+<path d="M8 12C8 10 10 9 12 9L15 11H8V12Z" fill="#FF5C00"></path>
+<path d="M32 12C32 10 30 9 28 9L25 11H32V12Z" fill="#FF5C00"></path>
+<circle cx="15" cy="18" fill="black" r="1.5"></circle>
+<circle cx="25" cy="18" fill="black" r="1.5"></circle>
+</svg>
+</div>
+</div>
+<h2 class="text-black text-2xl font-display font-bold tracking-tight">Moove</h2>
+</div>
+<nav class="hidden lg:flex items-center gap-8">
+<a class="text-slate-500 hover:text-black font-bold text-sm transition-colors" href="#">Simulate</a>
+<a class="text-black font-bold text-sm border-b-2 border-primary pb-1" href="#">Pathways</a>
+<a class="text-slate-500 hover:text-black font-bold text-sm transition-colors" href="#">Cost Calc</a>
+<a class="text-slate-500 hover:text-black font-bold text-sm transition-colors" href="#">Community</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-slate-100 p-2.5 rounded-xl hover:bg-slate-200 transition-colors">
+<span class="material-symbols-outlined text-[22px]">search</span>
+</button>
+<div class="h-10 w-10 rounded-xl border-2 border-black overflow-hidden hover:scale-105 transition-transform cursor-pointer">
+<img alt="User profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKz8cDc6_8Pfzj-su_9v2D3aWILNQkjNTot-as01Gi5v0SMmwK1pIrtZ_lu2ljYqmCCCIVVUuQ5wbLCpiD8m0s86rtTXZ3bHFtJ8cjHH9b-rIk8NQzpHRCUG99IdABVX_Yp2S_1MBfrTHE8D4uhwOIlzX-DtBSfei5oTWL1B_oqywPlwRlFqq50LGsFFjUUyo8UYIaB3qr1TXjAESGGWsE5qElurw81E0vtMwZArRpy78PpoxTNNfspVWGvudrUToYLhGAyUOfpUE"/>
+</div>
+</div>
+</header>
+<main class="flex-1 px-4 md:px-12 lg:px-24 py-12">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-16 relative">
+<div class="max-w-2xl">
+<div class="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-4">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+                        Live Comparisons
+                    </div>
+<h1 class="text-5xl md:text-6xl font-display font-extrabold text-black leading-tight tracking-tight mb-4">
+                        The Smart Way <br/><span class="text-primary italic">to Migration.</span>
+</h1>
+<p class="text-slate-600 text-lg font-medium max-w-lg leading-relaxed">
+                        Compare global pathways with AI precision. We've mapped the bureaucracy so you don't have to.
+                    </p>
+</div>
+<div class="relative group pop-bubble">
+<div class="absolute -top-24 right-0 md:right-auto md:-left-12 w-48 bg-black text-white p-5 rounded-3xl rounded-bl-none shadow-2xl border-2 border-primary/20 transform hover:scale-105 transition-all">
+<p class="text-sm font-bold leading-tight">Same goal. <br/>Different road. 🐮</p>
+<div class="absolute -bottom-4 left-0 w-8 h-8 bg-black" style="clip-path: polygon(0 0, 0% 100%, 100% 0);"></div>
+</div>
+<div class="w-20 h-20 bg-white border-[3px] border-black rounded-3xl flex items-center justify-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transform group-hover:rotate-6 transition-all cursor-help relative overflow-hidden">
+<svg class="w-12 h-12" fill="none" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+<rect fill="black" height="14" rx="2" width="20" x="10" y="16"></rect>
+<path d="M6 14C6 11 9 10 12 10L16 13H6V14Z" fill="#FF5C00"></path>
+<path d="M34 14C34 11 31 10 28 10L24 13H34V14Z" fill="#FF5C00"></path>
+<circle cx="15" cy="21" fill="white" r="1.5"></circle>
+<circle cx="25" cy="21" fill="white" r="1.5"></circle>
+</svg>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+<div class="comparison-card glass-card rounded-3xl p-8 hover:bg-white flex flex-col group border-2 border-transparent hover:border-black/5">
+<div class="flex justify-between items-start mb-8">
+<div class="w-16 h-12 rounded-xl overflow-hidden border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] transition-transform group-hover:scale-110">
+<img alt="Germany" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6ylrCwIjWiapW3OnT94xPHQ5LGSrZGbKzkgyY4cDzaGDXlhkOWOxcPpYpWD86AeqNXgJoVvrytPDsJELctQki1o7nTItgxdTjs-5pMN-aLaZz3HS96us2WJld8JEJ_uNw7Y9EGQrJqT1mWJ2hn2iqUYeFnU8yEZdrCAkLncOJ1TkPGo9gvAIdiH-jBUETop5Wz5Dyfm0FLm4iZU1RXMNlYYPPwb97S13-eJDVEa_AgTq-jaSRVg8gKT7DYTuQbLCYCOch72NXnLg"/>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Success Rate</span>
+<span class="text-2xl font-display font-bold text-black">94%</span>
+</div>
+</div>
+<div class="mb-6">
+<h3 class="text-3xl font-display font-extrabold text-black mb-1">Germany</h3>
+<p class="text-primary font-bold text-sm tracking-tight uppercase">Skilled Worker Track</p>
+</div>
+<div class="space-y-4 mb-8">
+<div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 group-hover:border-black/10 transition-colors">
+<span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Risk Level</span>
+<span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase">Low Risk</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 group-hover:border-black/10 transition-colors">
+<span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Processing</span>
+<span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-[10px] font-black uppercase">6-9 Months</span>
+</div>
+</div>
+<button class="mt-auto w-full py-4 bg-black text-white rounded-2xl font-bold text-sm hover:bg-primary transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg">
+                        Simulate Pathway
+                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="comparison-card active bg-black text-white rounded-3xl p-8 flex flex-col">
+<div class="absolute top-0 right-0 p-4">
+<span class="bg-primary text-white text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest shadow-xl border border-white/20">Recommended</span>
+</div>
+<div class="flex justify-between items-start mb-8">
+<div class="w-16 h-12 rounded-xl overflow-hidden border-2 border-white/20 shadow-lg">
+<img alt="Canada" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7t5NLbTEN4RCbbnqZOAGen0h8JLlAT9r3ezaTHxhqmNJJtcLc8yglzBVp2VMqk4ZSHA1GuQWWwMhboA1OxzwuVhrQQuQtDm4jbUnLiH2awZ33i1RwCd_iA7ZUXTnb77JtMOvSnfWkgYkHd3dxw5xqevi07FSBnBbvaT6kE3udO1XPN0iwUTCe_Cc4hzPNFN3xH_qY1OAXmElhfCb5ZKD9b9OSRPqX_XdHj1CgBYXcZj3i4c-9ywLYXJwlOu_eLKVo_Gwz__RhE60"/>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Success Rate</span>
+<span class="text-2xl font-display font-bold text-white">82%</span>
+</div>
+</div>
+<div class="mb-6">
+<h3 class="text-3xl font-display font-extrabold text-white mb-1">Canada</h3>
+<p class="text-accent font-bold text-sm tracking-tight uppercase">Express Entry (FSW)</p>
+</div>
+<div class="space-y-4 mb-8">
+<div class="flex items-center justify-between p-4 bg-white/10 rounded-2xl border border-white/5">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Risk Level</span>
+<span class="px-3 py-1 bg-amber-400/20 text-amber-400 rounded-full text-[10px] font-black uppercase">Moderate</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-white/10 rounded-2xl border border-white/5">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Processing</span>
+<span class="px-3 py-1 bg-accent/20 text-accent rounded-full text-[10px] font-black uppercase">4-6 Months</span>
+</div>
+</div>
+<button class="mt-auto w-full py-4 bg-white text-black rounded-2xl font-extrabold text-sm hover:bg-accent transition-all active:scale-95 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+                        Selected Path
+                    </button>
+</div>
+<div class="comparison-card glass-card rounded-3xl p-8 hover:bg-white flex flex-col group border-2 border-transparent hover:border-black/5">
+<div class="flex justify-between items-start mb-8">
+<div class="w-16 h-12 rounded-xl overflow-hidden border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] transition-transform group-hover:scale-110">
+<img alt="Netherlands" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQ63Jl1xBGtKuJ-DuuiUzini7rw9XqUr7b9XM241A5TGP4SaZ0AqZIY4_5IJsIW1PpT4e_P1Kv-bFenvHVaUU8xdc88mp8z5EVweRk7n8en7LkJkpaOFqDUK-hgG0J_mP9Rl4kk7zv_eWv9g9LpH1Tk4ZIUkY-TppQk4_ip6kzDoUt62G6t-WlAjSMHMrZ4GXeUiXH8LieNz1_2ct-BW0gLYMUNYvEHPh0AmFWVl63E66J6IIu7YMKU0r3WNJ1bFuQcyS2P7O5m6M"/>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Success Rate</span>
+<span class="text-2xl font-display font-bold text-black">98%</span>
+</div>
+</div>
+<div class="mb-6">
+<h3 class="text-3xl font-display font-extrabold text-black mb-1">Netherlands</h3>
+<p class="text-primary font-bold text-sm tracking-tight uppercase">Highly Skilled Migrant</p>
+</div>
+<div class="space-y-4 mb-8">
+<div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 group-hover:border-black/10 transition-colors">
+<span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Risk Level</span>
+<span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase">Low Risk</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 group-hover:border-black/10 transition-colors">
+<span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Processing</span>
+<span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase">2-4 Weeks</span>
+</div>
+</div>
+<button class="mt-auto w-full py-4 bg-black text-white rounded-2xl font-bold text-sm hover:bg-primary transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg">
+                        Simulate Pathway
+                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+<div class="bg-white border-[3px] border-black rounded-[3rem] p-10 shadow-[20px_20px_0px_0px_rgba(0,0,0,0.05)] overflow-hidden relative">
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+<div class="flex flex-col lg:flex-row justify-between items-start gap-12 relative z-10">
+<div class="lg:w-2/3">
+<div class="flex items-center gap-4 mb-8">
+<h2 class="text-4xl font-display font-black text-black">Canada Deep-Dive</h2>
+<span class="bg-black text-white px-4 py-1.5 rounded-full text-xs font-bold tracking-tight">Express Entry 2024</span>
+</div>
+<div class="bg-slate-50 rounded-[2.5rem] p-10 border-2 border-black/5 mb-8">
+<div class="flex justify-between items-center mb-12">
+<div class="flex flex-col items-center">
+<div class="w-16 h-16 bg-black rounded-2xl flex items-center justify-center text-white mb-3 rotate-6 shadow-lg">
+<span class="material-symbols-outlined text-2xl">description</span>
+</div>
+<span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Step 01</span>
+<span class="text-sm font-bold">ITA Prep</span>
+</div>
+<div class="h-[3px] flex-1 bg-slate-200 mx-4 relative rounded-full">
+<div class="absolute top-0 left-0 h-full bg-primary w-1/2 rounded-full"></div>
+</div>
+<div class="flex flex-col items-center">
+<div class="w-16 h-16 bg-slate-200 rounded-2xl flex items-center justify-center text-slate-400 mb-3 shadow-inner">
+<span class="material-symbols-outlined text-2xl">flight_takeoff</span>
+</div>
+<span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Step 02</span>
+<span class="text-sm font-bold text-slate-400">Arrival</span>
+</div>
+<div class="h-[3px] flex-1 bg-slate-200 mx-4 rounded-full"></div>
+<div class="flex flex-col items-center">
+<div class="w-16 h-16 bg-slate-200 rounded-2xl flex items-center justify-center text-slate-400 mb-3 shadow-inner">
+<span class="material-symbols-outlined text-2xl">home_pin</span>
+</div>
+<span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Step 03</span>
+<span class="text-sm font-bold text-slate-400">PR Approval</span>
+</div>
+</div>
+<div class="flex items-center gap-3 text-slate-600 bg-white p-5 rounded-2xl border-2 border-black/5 inline-flex shadow-sm">
+<span class="material-symbols-outlined text-primary">info</span>
+<span class="text-sm font-bold tracking-tight">Currently at "ITA Received" stage. Estimated 120 days until next milestone.</span>
+</div>
+</div>
+</div>
+<div class="lg:w-1/3 grid grid-cols-1 gap-6 w-full">
+<div class="bg-slate-50 p-7 rounded-[2rem] border-2 border-transparent hover:border-black transition-all cursor-default shadow-sm group">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">trending_up</span>
+<span class="text-xs font-black uppercase text-slate-500 tracking-wider">Prob. of Success</span>
+</div>
+<div class="text-4xl font-display font-black text-black mb-3">82%</div>
+<div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[82%] rounded-full"></div>
+</div>
+</div>
+<div class="bg-slate-50 p-7 rounded-[2rem] border-2 border-transparent hover:border-black transition-all cursor-default shadow-sm group">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">payments</span>
+<span class="text-xs font-black uppercase text-slate-500 tracking-wider">Total Est. Cost</span>
+</div>
+<div class="text-4xl font-display font-black text-black mb-1">$12,400</div>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Includes all fees &amp; medicals</p>
+</div>
+<div class="bg-slate-50 p-7 rounded-[2rem] border-2 border-transparent hover:border-black transition-all cursor-default shadow-sm group">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">work</span>
+<span class="text-xs font-black uppercase text-slate-500 tracking-wider">Avg. IT Salary</span>
+</div>
+<div class="text-4xl font-display font-black text-black mb-1">$85k <span class="text-lg font-bold text-slate-400">CAD</span></div>
+<div class="flex items-center gap-1 text-emerald-600 font-bold text-xs uppercase tracking-wider">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+                                +12% vs Current Market
+                            </div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="mt-20 border-t-2 border-black/5 bg-white/40 backdrop-blur-md px-12 py-16">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
+<div class="flex items-center gap-4">
+<div class="size-12 flex items-center justify-center bg-black rounded-2xl shadow-xl transform -rotate-3 transition-transform hover:rotate-0">
+<svg class="w-10 h-10" fill="none" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+<rect fill="white" height="13" rx="2" width="20" x="10" y="15"></rect>
+<path d="M7 13C7 11 9 10 11 10L14 12H7V13Z" fill="#FF5C00"></path>
+<path d="M33 13C33 11 31 10 29 10L26 12H33V13Z" fill="#FF5C00"></path>
+<circle cx="16" cy="20" fill="black" r="1.2"></circle>
+<circle cx="24" cy="20" fill="black" r="1.2"></circle>
+</svg>
+</div>
+<div>
+<span class="font-display font-black text-2xl tracking-tighter">Moove</span>
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] leading-none">Global Freedom</p>
+</div>
+</div>
+<div class="flex gap-12">
+<a class="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="#">Terms</a>
+<a class="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="#">Privacy</a>
+<a class="text-sm font-bold text-slate-500 hover:text-black transition-colors" href="#">Contact</a>
+</div>
+<div class="flex flex-col items-center md:items-end gap-1">
+<p class="text-xs font-black text-black/80 uppercase tracking-widest">© 2024 Moove. Built for the bold.</p>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">System Operational</span>
+</div>
+</div>
+</div>
+</footer>
+</div>
+
+</body></html>

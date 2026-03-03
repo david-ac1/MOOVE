@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Migration Intake Agent | Moove</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+        @layer base {
+            body {
+                font-family: 'Plus Jakarta Sans', sans-serif;
+            }
+        }
+        :root {
+            --primary: #000000;
+            --accent: #22c55e;
+            --brand-green: #22c55e;
+            --brand-amber: #f59e0b;
+            --brand-red: #ef4444;
+            --charcoal: #121212;
+            --neon-green: #39FF14;
+        }
+        .cow-spots {
+            background-color: #f8fafc;
+            background-image: radial-gradient(#e2e8f0 20%, transparent 20%),
+                              radial-gradient(#e2e8f0 20%, transparent 20%);
+            background-position: 0 0, 50px 50px;
+            background-size: 100px 100px;
+            position: relative;
+        }
+        .cow-spots::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30,50 Q60,20 90,50 T150,80 Q180,110 140,150 T60,130 T30,50 Z' fill='%23000' fill-opacity='0.05'/%3E%3Cpath d='M250,250 Q280,220 310,250 T370,280 Q400,310 360,350 T280,330 T250,250 Z' fill='%23000' fill-opacity='0.06'/%3E%3Cpath d='M100,280 Q130,250 160,280 T220,310 Q250,340 210,380 T130,360 T100,280 Z' fill='%23000' fill-opacity='0.04'/%3E%3C/svg%3E");
+            background-size: 500px 500px;
+            pointer-events: none;
+        }
+        .neo-brutal {
+            box-shadow: 6px 6px 0px 0px rgba(0,0,0,1);
+            border: 3px solid #000;
+        }
+        .neo-brutal-sm {
+            box-shadow: 3px 3px 0px 0px rgba(0,0,0,1);
+            border: 2px solid #000;
+        }
+        .neo-brutal-hover:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 8px 8px 0px 0px rgba(0,0,0,1);
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #000;
+            border: 2px solid #fff;
+            box-shadow: 2px 2px 0px #000;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#000000",
+                        "accent-green": "#22c55e",
+                        "charcoal": "#121212",
+                    },
+                    borderRadius: {
+                        "xl": "1rem",
+                        "2xl": "1.5rem",
+                        "3xl": "2.5rem"
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-white text-slate-900 min-h-screen">
+<div class="layout-container flex h-screen flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b-4 border-black bg-white px-8 py-4 z-20">
+<div class="flex items-center gap-4">
+<div class="relative group">
+<div class="size-12 flex items-center justify-center rounded-2xl bg-white border-2 border-black neo-brutal-sm overflow-hidden">
+<img alt="Moove Winged Cow Logo" class="w-10 h-10 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1g3MMH6dIbE9gQ4QCTxq2FzcVuI4opLJX1asPBgrcIund8pvRpGQW_m4_PaS3QzWi7G9zC3nZdqV7KwC6diU1D7Q3nbC06rjUBUjJcCXVJP1dKm7EQ9OxJYyjtEEwdYgS2DnyuENss6k6Vv0MOAErFylkCfGmIwdhfHTCs684Xqy7uyeNwxSIWqzMdtu_U5EUGwU-p9Do_Dirb2xe5hCeowV4JSKHDUj_b-xCWYZW0e_iNAKCEPmsmGILO0A1ZhD4p0bZ1oFTsgA"/>
+</div>
+<div class="absolute -top-1 -right-2 bg-black text-white rounded-full p-0.5 border border-white">
+<span class="material-symbols-outlined text-[12px] font-black">flutter_dash</span>
+</div>
+</div>
+<div class="flex flex-col -gap-1">
+<h2 class="text-black text-2xl font-black leading-none tracking-tighter">MOOVE</h2>
+<span class="text-[9px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Migration Intelligence</span>
+</div>
+</div>
+<div class="flex flex-1 justify-end gap-6 items-center">
+<nav class="hidden md:flex items-center gap-10">
+<a class="text-black text-sm font-black hover:text-[#ff4500] transition-colors" href="#">HOW IT WORKS</a>
+<a class="text-black text-sm font-black hover:text-[#ff4500] transition-colors" href="#">PATHWAYS</a>
+<a class="text-black text-sm font-black hover:text-[#ff4500] transition-colors" href="#">PRICING</a>
+</nav>
+<div class="h-8 w-px bg-black/10"></div>
+<button class="flex min-w-[140px] cursor-pointer items-center justify-center rounded-2xl h-12 px-6 bg-black text-white text-sm font-black uppercase tracking-wider neo-brutal-sm hover:translate-y-[-2px] transition-all">
+<span>Save Progress</span>
+</button>
+<div class="bg-slate-200 rounded-2xl size-11 border-2 border-black neo-brutal-sm overflow-hidden" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAp8f9bFcTsKWqwoHMqXhzJMe6K3D67Z8xRk-AntCy6cYxdMruA_9vtIZLkjncbXUIIuBnmEotfmicj3tEHNR7mm3Stxzu3KdNQJGoAVKBzWbWpGNsbnRwn1-nvXAcNVToV_0vkgQEZjV0jnRdNDX0ugPgzjvPXss7F7Ym6iOmwzkU2TAkGipojB_FReeRb2EkQfg6eyD5auIoIwlxyn6-w2Gg4XZWSWwM-H5Zf0RT9vUc1fh9Q5c3JWMV1EzxCC0CWIYkvCi1rlL4'); background-size: cover;"></div>
+</div>
+</header>
+<main class="flex flex-1 overflow-hidden">
+<aside class="w-72 border-r-4 border-black bg-white p-6 flex flex-col gap-4">
+<div class="flex items-center gap-3 px-5 py-4 rounded-3xl bg-black text-white neo-brutal-sm">
+<span class="material-symbols-outlined">chat_bubble</span>
+<p class="text-sm font-black uppercase tracking-tight">Intake Chat</p>
+</div>
+<div class="flex items-center gap-3 px-5 py-4 rounded-3xl text-black font-extrabold hover:bg-slate-50 transition-colors cursor-pointer border-2 border-transparent hover:border-black">
+<span class="material-symbols-outlined">route</span>
+<p class="text-sm uppercase tracking-tight">Simulations</p>
+</div>
+<div class="flex items-center gap-3 px-5 py-4 rounded-3xl text-black font-extrabold hover:bg-slate-50 transition-colors cursor-pointer border-2 border-transparent hover:border-black">
+<span class="material-symbols-outlined">account_circle</span>
+<p class="text-sm uppercase tracking-tight">Profile</p>
+</div>
+<div class="mt-auto p-6 rounded-[2rem] bg-slate-50 border-2 border-black neo-brutal-sm">
+<div class="flex justify-between items-center mb-3">
+<span class="text-[10px] font-black text-black uppercase tracking-widest">Progress</span>
+<span class="text-xs font-black text-black">Step 1/4</span>
+</div>
+<div class="w-full bg-white border-2 border-black h-5 rounded-full overflow-hidden p-0.5">
+<div class="bg-accent-green h-full rounded-full border-r-2 border-black" style="width: 25%;"></div>
+</div>
+</div>
+</aside>
+<div class="flex-1 flex overflow-hidden cow-spots">
+<section class="flex-1 flex flex-col overflow-y-auto">
+<div class="max-w-2xl mx-auto w-full py-16 px-8 flex flex-col gap-14">
+<div class="flex gap-6 items-start">
+<div class="size-16 rounded-[2rem] bg-white border-2 border-black neo-brutal flex items-center justify-center shrink-0 overflow-hidden relative">
+<img alt="Moove Cow Mascot" class="w-12 h-12 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1g3MMH6dIbE9gQ4QCTxq2FzcVuI4opLJX1asPBgrcIund8pvRpGQW_m4_PaS3QzWi7G9zC3nZdqV7KwC6diU1D7Q3nbC06rjUBUjJcCXVJP1dKm7EQ9OxJYyjtEEwdYgS2DnyuENss6k6Vv0MOAErFylkCfGmIwdhfHTCs684Xqy7uyeNwxSIWqzMdtu_U5EUGwU-p9Do_Dirb2xe5hCeowV4JSKHDUj_b-xCWYZW0e_iNAKCEPmsmGILO0A1ZhD4p0bZ1oFTsgA"/>
+<div class="absolute bottom-0 right-0 bg-accent-green size-4 border-2 border-black rounded-full"></div>
+</div>
+<div class="flex flex-col gap-3">
+<span class="text-[10px] font-black text-black uppercase tracking-[0.25em] ml-1 opacity-50">MOOVE AGENT • ONLINE</span>
+<div class="bg-white p-7 rounded-[2.5rem] rounded-tl-none neo-brutal-sm">
+<p class="text-black font-bold text-xl leading-relaxed">
+                                    Hey! I'm your Moove strategist. Ready to find your dream destination? 
+                                    <br/><br/>
+                                    First off, <span class="bg-yellow-300 px-2 py-0.5 rounded-lg border-2 border-black">what's your current citizenship?</span>
+</p>
+</div>
+</div>
+</div>
+<div class="ml-24 flex flex-wrap gap-4">
+<button class="px-8 py-4 rounded-3xl bg-black text-white font-black text-sm neo-brutal flex items-center gap-3 hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-xl text-accent-green">check_circle</span> NIGERIA
+                        </button>
+<button class="px-8 py-4 rounded-3xl bg-white text-black border-2 border-black font-black text-sm neo-brutal-sm neo-brutal-hover transition-all">INDIA</button>
+<button class="px-8 py-4 rounded-3xl bg-white text-black border-2 border-black font-black text-sm neo-brutal-sm neo-brutal-hover transition-all">PHILIPPINES</button>
+<button class="px-8 py-4 rounded-3xl bg-white text-black border-2 border-black font-black text-sm neo-brutal-sm neo-brutal-hover transition-all">BRAZIL</button>
+<button class="px-8 py-4 rounded-3xl bg-slate-50 border-2 border-dashed border-slate-400 text-slate-500 font-black text-sm hover:border-black hover:text-black hover:bg-white transition-all">OTHER...</button>
+</div>
+<div class="flex gap-6 items-start">
+<div class="size-16 rounded-[2rem] bg-white border-2 border-black neo-brutal flex items-center justify-center shrink-0 overflow-hidden relative">
+<img alt="Moove Cow Mascot" class="w-12 h-12 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuOs35mRUIgcOz1ZZcpjdEi2yjjy4lNUcpSD9mubusazr4PSyy_2VeprZY418-bJzLhqWXAyscN8LsEEhxGygt_8_4yseKy54vt4S0Yxz_tugj7ksQOSOtDnkH1WrEVhkm9-VEzoiBc3b9ySEgzQoO7Yr7kJ2efmxeRpdjMkcJK8wl02ohkEF_WEdJT7vhr3BGvrEzvL2YjcxGAS-No8CK1AvEU_ENmlyMjsAAyTOG0e3F05V43cfhZfAk8NmPfasU9cyplU4jjM8"/>
+</div>
+<div class="flex flex-col gap-3">
+<span class="text-[10px] font-black text-black uppercase tracking-[0.25em] ml-1 opacity-50">MOOVE AGENT</span>
+<div class="bg-white p-7 rounded-[2.5rem] rounded-tl-none neo-brutal-sm">
+<p class="text-black font-bold text-xl leading-relaxed">
+                                    Got it. And what's your <span class="bg-accent-green/20 px-2 py-0.5 rounded-lg border-2 border-black">highest level of completed education?</span> This is huge for your eligibility score.
+                                </p>
+</div>
+</div>
+</div>
+<div class="ml-24 grid grid-cols-1 sm:grid-cols-2 gap-6">
+<div class="p-6 rounded-[2rem] bg-white border-2 border-black neo-brutal flex items-center gap-5 cursor-pointer hover:bg-slate-50 transition-colors group">
+<div class="size-14 rounded-2xl bg-black flex items-center justify-center text-white shrink-0 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl">school</span>
+</div>
+<div class="overflow-hidden">
+<p class="text-base font-black text-black uppercase truncate">Master's Degree</p>
+<p class="text-[10px] font-black text-slate-400 tracking-widest uppercase">Post-Graduate</p>
+</div>
+<div class="ml-auto text-accent-green">
+<span class="material-symbols-outlined text-4xl">check_circle</span>
+</div>
+</div>
+<div class="p-6 rounded-[2rem] bg-white border-2 border-black neo-brutal-sm neo-brutal-hover flex items-center gap-5 cursor-pointer group">
+<div class="size-14 rounded-2xl bg-slate-100 border-2 border-black flex items-center justify-center text-black shrink-0 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl">history_edu</span>
+</div>
+<div class="overflow-hidden">
+<p class="text-base font-black text-black uppercase truncate">Bachelor's Degree</p>
+<p class="text-[10px] font-black text-slate-400 tracking-widest uppercase">Undergraduate</p>
+</div>
+<div class="ml-auto text-slate-200">
+<span class="material-symbols-outlined text-4xl">circle</span>
+</div>
+</div>
+</div>
+<div class="ml-24 flex flex-col gap-8 max-w-md">
+<label class="text-xs font-black text-black uppercase tracking-[0.3em]">How old are you?</label>
+<div class="bg-white p-8 rounded-[2.5rem] neo-brutal-sm flex flex-col gap-6">
+<div class="flex justify-between items-center">
+<span class="text-5xl font-black text-black tracking-tighter">28</span>
+<span class="text-xs font-black bg-black text-white px-3 py-1 rounded-full uppercase">Optimal Age</span>
+</div>
+<input class="w-full h-3 bg-slate-200 rounded-full appearance-none cursor-pointer border-2 border-black" max="65" min="18" type="range" value="28"/>
+<div class="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
+<span>18 years</span>
+<span>65 years</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="w-[440px] border-l-4 border-black bg-charcoal p-10 flex flex-col gap-10 text-white relative">
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#fff 1px, transparent 0); background-size: 30px 30px;"></div>
+<div class="relative z-10 flex items-center justify-between">
+<h3 class="text-2xl font-black italic tracking-tighter uppercase">YOUR PROFILE</h3>
+<div class="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm">
+<div class="size-2 rounded-full bg-accent-green animate-pulse"></div>
+<span class="text-[10px] font-black uppercase tracking-widest">Live Score</span>
+</div>
+</div>
+<div class="relative z-10 space-y-8">
+<div class="group">
+<div class="flex items-center justify-between mb-3 px-1">
+<p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">Citizenship</p>
+<span class="flex items-center gap-2 px-3 py-1 rounded-full bg-accent-green/20 text-accent-green text-[10px] font-black uppercase border border-accent-green/30">
+<span class="size-2 rounded-full bg-accent-green"></span> High Potential
+                            </span>
+</div>
+<div class="flex items-center gap-5 bg-white/5 p-5 rounded-[2rem] border-2 border-white/10 hover:border-accent-green/50 hover:bg-white/10 transition-all cursor-pointer">
+<div class="size-14 rounded-2xl bg-white text-black flex items-center justify-center neo-brutal-sm shrink-0">
+<span class="material-symbols-outlined text-2xl font-bold">public</span>
+</div>
+<div>
+<p class="text-2xl font-black tracking-tight">NIGERIA</p>
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Global Tier 2</p>
+</div>
+<button class="ml-auto opacity-40 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white">edit_square</span>
+</button>
+</div>
+</div>
+<div class="group">
+<div class="flex items-center justify-between mb-3 px-1">
+<p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">Education</p>
+<span class="flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-black uppercase border border-amber-500/30">
+<span class="size-2 rounded-full bg-amber-400"></span> Mid Risk
+                            </span>
+</div>
+<div class="flex items-center gap-5 bg-white/5 p-5 rounded-[2rem] border-2 border-white/10 hover:border-amber-500/50 hover:bg-white/10 transition-all cursor-pointer">
+<div class="size-14 rounded-2xl bg-white text-black flex items-center justify-center neo-brutal-sm shrink-0">
+<span class="material-symbols-outlined text-2xl font-bold">school</span>
+</div>
+<div>
+<p class="text-2xl font-black tracking-tight">MASTER'S</p>
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">STEM Field</p>
+</div>
+<button class="ml-auto opacity-40 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white">edit_square</span>
+</button>
+</div>
+</div>
+<div class="group">
+<div class="flex items-center justify-between mb-3 px-1">
+<p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">Preferred Destination</p>
+<span class="flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-[10px] font-black uppercase border border-red-500/30">
+<span class="size-2 rounded-full bg-red-400"></span> High Competition
+                            </span>
+</div>
+<div class="flex items-center gap-5 bg-white/5 p-5 rounded-[2rem] border-2 border-white/10 hover:border-red-500/50 hover:bg-white/10 transition-all cursor-pointer">
+<div class="size-14 rounded-2xl bg-accent-green text-black flex items-center justify-center neo-brutal-sm shrink-0">
+<span class="material-symbols-outlined text-2xl font-bold">location_on</span>
+</div>
+<div>
+<p class="text-2xl font-black tracking-tight">CANADA</p>
+<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Express Entry</p>
+</div>
+<button class="ml-auto opacity-40 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white">edit_square</span>
+</button>
+</div>
+</div>
+</div>
+<div class="mt-auto relative z-10 p-8 rounded-[2.5rem] bg-white border-4 border-black neo-brutal text-black">
+<div class="flex justify-between items-start mb-6">
+<div>
+<p class="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">READINESS SCORE</p>
+<div class="flex items-end gap-2">
+<span class="text-6xl font-black leading-none tracking-tighter">642</span>
+<span class="text-lg font-bold text-slate-400 mb-1">/ 1200</span>
+</div>
+</div>
+<div class="size-16 rounded-full border-4 border-slate-100 flex items-center justify-center relative">
+<svg class="size-14 transform -rotate-90">
+<circle class="text-slate-100" cx="28" cy="28" fill="transparent" r="24" stroke="currentColor" stroke-width="6"></circle>
+<circle class="text-accent-green" cx="28" cy="28" fill="transparent" r="24" stroke="currentColor" stroke-dasharray="150" stroke-dashoffset="65" stroke-linecap="round" stroke-width="6"></circle>
+</svg>
+<span class="absolute inset-0 flex items-center justify-center text-[10px] font-black">54%</span>
+</div>
+</div>
+<button class="w-full py-5 rounded-2xl bg-black text-white font-black text-sm uppercase tracking-widest hover:translate-y-[-2px] hover:shadow-xl transition-all flex items-center justify-center gap-3">
+<span class="material-symbols-outlined text-xl">rocket_launch</span> Analyze Pathway
+                    </button>
+<p class="text-center mt-4 text-[10px] font-bold text-slate-400 uppercase tracking-tighter italic">Updating based on your last answer...</p>
+</div>
+</section>
+</div>
+</main>
+</div>
+
+</body></html>

@@ -1,0 +1,388 @@
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Premium Migration Simulator | Moove</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+        :root {
+            --primary: #0f49bd;
+            --charcoal: #12141d;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f8fafc;
+        }
+        .cow-patches {
+            background-color: #f8fafc;
+            background-image: radial-gradient(#e2e8f0 20%, transparent 20%),
+                              radial-gradient(#e2e8f0 20%, transparent 20%);
+            background-position: 0 0, 50px 50px;
+            background-size: 100px 100px;
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            opacity: 0.4;
+        }
+        .fintech-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02), 0 0 0 1px rgba(0, 0, 0, 0.03);
+        }
+        .fintech-shadow-lg {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.06), 0 10px 10px -5px rgba(0, 0, 0, 0.02), 0 0 0 1px rgba(0, 0, 0, 0.04);
+        }
+        .timeline-track {
+            background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
+        }
+        .glow-green { box-shadow: 0 0 15px rgba(16, 185, 129, 0.5); }
+        .glow-amber { box-shadow: 0 0 15px rgba(245, 158, 11, 0.5); }
+        .glow-rose { box-shadow: 0 0 15px rgba(239, 68, 68, 0.5); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .winged-cow-logo {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cow-body {
+            position: relative;
+            z-index: 2;
+        }
+        .wing-l, .wing-r {
+            position: absolute;
+            background: currentColor;
+            width: 14px;
+            height: 10px;
+            border-radius: 50% 50% 10% 10%;
+            z-index: 1;
+            opacity: 0.8;
+        }
+        .wing-l { left: -8px; top: 4px; transform: rotate(-30deg); }
+        .wing-r { right: -8px; top: 4px; transform: rotate(30deg); }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0f49bd",
+                        "charcoal": "#12141d",
+                        "slate-card": "#fcfcfd",
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="antialiased text-slate-900">
+<div class="cow-patches"></div>
+<div class="relative flex min-h-screen flex-col">
+<header class="sticky top-0 z-50 w-full border-b border-slate-200/60 bg-white/70 backdrop-blur-xl">
+<div class="mx-auto flex h-20 max-w-[1440px] items-center justify-between px-8 lg:px-12">
+<div class="flex items-center gap-4">
+<div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-xl group cursor-pointer relative">
+<div class="winged-cow-logo">
+<div class="wing-l"></div>
+<span class="material-symbols-outlined cow-body font-bold !text-2xl">pest_control_rodent</span>
+<div class="wing-r"></div>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="text-2xl font-black tracking-tighter text-slate-900 uppercase">Moove</span>
+<span class="text-[9px] font-bold text-primary tracking-[0.2em] uppercase leading-none -mt-1">Intelligence</span>
+</div>
+</div>
+<nav class="hidden lg:flex items-center gap-10">
+<a class="text-sm font-bold text-primary border-b-2 border-primary py-1" href="#">Pathway Simulator</a>
+<a class="text-sm font-semibold text-slate-500 hover:text-primary transition-colors" href="#">Strategic Plans</a>
+<a class="text-sm font-semibold text-slate-500 hover:text-primary transition-colors" href="#">Global Policy</a>
+<a class="text-sm font-semibold text-slate-500 hover:text-primary transition-colors" href="#">Concierge</a>
+</nav>
+<div class="flex items-center gap-6">
+<button class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-slate-200">
+<div class="text-right hidden sm:block">
+<p class="text-xs font-bold text-slate-900 leading-tight">Alex Sterling</p>
+<p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight">Pro Plan</p>
+</div>
+<div class="h-10 w-10 overflow-hidden rounded-full ring-2 ring-white fintech-shadow">
+<img alt="Profile" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBa2Kf7kMmTuCBKXuRk9UJcYbj9yC5yqqwa_7I7IkCXtPfpXCak57clKnnrLruv8noQ4LmD3k5qD32zZgeT39RCpjujrMduL2pqVeUQP3jufIqhWwZE3jck3s6ZDYJf6Q7tg5JrFV5GD_fhL6HxH9YV3D_yMMBWVZzj2mCN3AGJnpqwabLnURMuZJFH8l8tAY90WNjvwq7Ep7TuPu9wz5ml-Mt4lgvaUUNV7lyZnOfX8-5f1imomhssDQDWQU85PV0ZeLYFBTMKec"/>
+</div>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1 px-8 lg:px-12 py-10 max-w-[1440px] mx-auto w-full">
+<div class="mb-12 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+<div class="space-y-2">
+<div class="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary uppercase tracking-widest">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+                        AI Simulation Engine v4.2
+                    </div>
+<h1 class="text-4xl font-black tracking-tight text-slate-900">Premium Migration Simulator</h1>
+<p class="text-lg text-slate-500 font-medium">Visualizing a 10-year strategic residency trajectory to Canada.</p>
+</div>
+<div class="flex flex-wrap items-center gap-4">
+<div class="flex items-center gap-1 rounded-2xl bg-white p-1.5 fintech-shadow border border-slate-100">
+<button class="flex items-center gap-2 rounded-xl bg-slate-50 px-5 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-100 transition-all">
+<span class="material-symbols-outlined !text-lg text-primary">public</span>
+                            Canada
+                        </button>
+<button class="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50 transition-all">
+<span class="material-symbols-outlined !text-lg text-slate-400">flight_takeoff</span>
+                            From India
+                        </button>
+</div>
+<button class="flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-6 py-3.5 text-sm font-bold text-white shadow-xl hover:bg-slate-800 transition-all active:scale-95">
+<span class="material-symbols-outlined !text-lg">download</span>
+                        Export Strategy
+                    </button>
+</div>
+</div>
+<div class="grid grid-cols-1 gap-10 lg:grid-cols-12">
+<div class="lg:col-span-8 space-y-10">
+<div class="relative overflow-hidden rounded-[32px] bg-white p-10 fintech-shadow-lg border border-white">
+<div class="flex items-center justify-between mb-16">
+<div>
+<h3 class="text-xl font-extrabold text-slate-900 flex items-center gap-3">
+<div class="h-8 w-1.5 rounded-full bg-primary"></div>
+                                    Path Projections
+                                </h3>
+<p class="text-sm font-medium text-slate-400 mt-1">Multi-stage probability modeling</p>
+</div>
+<div class="flex gap-6">
+<span class="flex items-center gap-2 text-xs font-bold text-slate-600">
+<span class="h-2.5 w-2.5 rounded-full bg-emerald-500 glow-green"></span> Optimal
+                                </span>
+<span class="flex items-center gap-2 text-xs font-bold text-slate-600">
+<span class="h-2.5 w-2.5 rounded-full bg-amber-500 glow-amber"></span> Sensitive
+                                </span>
+<span class="flex items-center gap-2 text-xs font-bold text-slate-600">
+<span class="h-2.5 w-2.5 rounded-full bg-rose-500 glow-rose"></span> Critical
+                                </span>
+</div>
+</div>
+<div class="relative py-20 overflow-x-auto no-scrollbar">
+<div class="absolute top-1/2 left-0 h-4 w-full -translate-y-1/2 timeline-track rounded-full shadow-inner border-y border-white/10"></div>
+<div class="relative flex justify-between min-w-[900px] px-8">
+<div class="group relative flex flex-col items-center">
+<div class="absolute -top-16 px-4 py-1.5 rounded-full bg-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-widest border border-slate-200">Stage 01: Years 0-2</div>
+<div class="z-10 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-2xl glow-green transition-all group-hover:scale-110 group-hover:-rotate-6 cursor-pointer ring-4 ring-white">
+<span class="material-symbols-outlined !text-2xl">work</span>
+</div>
+<div class="mt-8 w-56 text-center bg-slate-card p-6 rounded-3xl border border-slate-100 fintech-shadow group-hover:border-emerald-200 transition-colors">
+<div class="inline-flex mb-3 items-center rounded-lg bg-emerald-500 px-3 py-1 text-[10px] font-black text-white uppercase tracking-wider">
+                                            SECURE
+                                        </div>
+<p class="text-base font-extrabold text-slate-900 leading-tight">Temp Work Visa</p>
+<p class="mt-2 text-xs font-medium text-slate-400 leading-relaxed">LMIA Sponsorship with verified tech employer.</p>
+</div>
+</div>
+<div class="group relative flex flex-col items-center">
+<div class="absolute -top-16 px-4 py-1.5 rounded-full bg-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-widest border border-slate-200">Stage 02: Years 2-5</div>
+<div class="z-10 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-2xl glow-amber transition-all group-hover:scale-110 group-hover:-rotate-6 cursor-pointer ring-4 ring-white">
+<span class="material-symbols-outlined !text-2xl">history_edu</span>
+</div>
+<div class="mt-8 w-56 text-center bg-slate-card p-6 rounded-3xl border border-slate-100 fintech-shadow group-hover:border-amber-200 transition-colors">
+<div class="inline-flex mb-3 items-center rounded-lg bg-amber-500 px-3 py-1 text-[10px] font-black text-white uppercase tracking-wider">
+                                            SENSITIVE
+                                        </div>
+<p class="text-base font-extrabold text-slate-900 leading-tight">Skilled Extension</p>
+<p class="mt-2 text-xs font-medium text-slate-400 leading-relaxed">Depends on continuous employment policy shifts.</p>
+</div>
+</div>
+<div class="group relative flex flex-col items-center">
+<div class="absolute -top-16 px-4 py-1.5 rounded-full bg-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-widest border border-slate-200">Stage 03: Years 5-8</div>
+<div class="z-10 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-2xl glow-green transition-all group-hover:scale-110 group-hover:-rotate-6 cursor-pointer ring-4 ring-white">
+<span class="material-symbols-outlined !text-2xl">verified_user</span>
+</div>
+<div class="mt-8 w-56 text-center bg-slate-card p-6 rounded-3xl border border-slate-100 fintech-shadow group-hover:border-emerald-200 transition-colors">
+<div class="inline-flex mb-3 items-center rounded-lg bg-emerald-500 px-3 py-1 text-[10px] font-black text-white uppercase tracking-wider">
+                                            HIGH PROB
+                                        </div>
+<p class="text-base font-extrabold text-slate-900 leading-tight">PR Status</p>
+<p class="mt-2 text-xs font-medium text-slate-400 leading-relaxed">Express Entry transition via CEC stream.</p>
+</div>
+</div>
+<div class="group relative flex flex-col items-center">
+<div class="absolute -top-16 px-4 py-1.5 rounded-full bg-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-widest border border-slate-200">Goal: Year 10</div>
+<div class="z-10 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-500 text-white shadow-2xl glow-rose transition-all group-hover:scale-110 group-hover:-rotate-6 cursor-pointer ring-4 ring-white">
+<span class="material-symbols-outlined !text-2xl">flag</span>
+</div>
+<div class="mt-8 w-56 text-center bg-slate-card p-6 rounded-3xl border border-slate-100 fintech-shadow group-hover:border-rose-200 transition-colors">
+<div class="inline-flex mb-3 items-center rounded-lg bg-rose-500 px-3 py-1 text-[10px] font-black text-white uppercase tracking-wider">
+                                            CRITICAL
+                                        </div>
+<p class="text-base font-extrabold text-slate-900 leading-tight">Citizenship</p>
+<p class="mt-2 text-xs font-medium text-slate-400 leading-relaxed">Quota monitoring required for final naturalization.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="rounded-[32px] bg-white p-8 fintech-shadow border border-white">
+<h4 class="mb-6 text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+<span class="material-symbols-outlined !text-lg text-primary">analytics</span>
+                                Approval Forecast
+                            </h4>
+<div class="flex items-center gap-8">
+<div class="relative flex h-28 w-28 items-center justify-center rounded-full border-[8px] border-emerald-50">
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-3xl font-black text-slate-900 leading-none">84</span>
+<span class="text-[10px] font-bold text-emerald-600 uppercase">%</span>
+</div>
+<svg class="h-full w-full -rotate-90 transform" viewBox="0 0 100 100">
+<circle class="text-emerald-500" cx="50" cy="50" fill="transparent" r="46" stroke="currentColor" stroke-dasharray="289" stroke-dashoffset="46" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+</div>
+<div class="space-y-2">
+<p class="text-sm font-bold text-slate-900">Strong Profile Alignment</p>
+<p class="text-xs text-slate-400 font-medium leading-relaxed">Comparing your data against 12,400 successful applicants in NOC 2173 category.</p>
+<div class="inline-block px-3 py-1 rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-600">UP +4% VS LAST MONTH</div>
+</div>
+</div>
+</div>
+<div class="rounded-[32px] bg-white p-8 fintech-shadow border border-white">
+<h4 class="mb-6 text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+<span class="material-symbols-outlined !text-lg text-primary">query_stats</span>
+                                Market Volatility
+                            </h4>
+<div class="space-y-5">
+<div class="space-y-1.5">
+<div class="flex items-center justify-between text-[11px] font-bold">
+<span class="text-slate-500 uppercase">Immigration Quotas</span>
+<span class="text-emerald-600">LOW RISK</span>
+</div>
+<div class="h-2 w-full rounded-full bg-slate-100">
+<div class="h-full w-[85%] rounded-full bg-emerald-500"></div>
+</div>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between text-[11px] font-bold">
+<span class="text-slate-500 uppercase">Economic Sentiment</span>
+<span class="text-amber-600">NEUTRAL</span>
+</div>
+<div class="h-2 w-full rounded-full bg-slate-100">
+<div class="h-full w-[52%] rounded-full bg-amber-500"></div>
+</div>
+</div>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between text-[11px] font-bold">
+<span class="text-slate-500 uppercase">Political Stability</span>
+<span class="text-rose-600">HIGH RISK</span>
+</div>
+<div class="h-2 w-full rounded-full bg-slate-100">
+<div class="h-full w-[30%] rounded-full bg-rose-500"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<aside class="lg:col-span-4">
+<div class="sticky top-28 space-y-8">
+<div class="flex items-center justify-between mb-2">
+<h3 class="text-lg font-black text-slate-900">Pathway Intelligence</h3>
+<span class="material-symbols-outlined text-slate-400">info</span>
+</div>
+<div class="rounded-[32px] bg-white p-6 fintech-shadow border border-white group hover:border-primary/20 transition-all">
+<div class="flex items-start justify-between mb-4">
+<div class="p-3 rounded-2xl bg-blue-50 text-primary">
+<span class="material-symbols-outlined">id_card</span>
+</div>
+<div class="text-right">
+<p class="text-2xl font-black text-slate-900">Rank 12</p>
+<p class="text-[10px] font-bold text-emerald-600 uppercase">+2 Positions</p>
+</div>
+</div>
+<h4 class="text-sm font-extrabold text-slate-900 mb-2">Global Access Quotient</h4>
+<p class="text-xs text-slate-400 font-medium leading-relaxed">Your Indian passport combined with upcoming H1B tenure boosts your security tier score to A-.</p>
+</div>
+<div class="rounded-[32px] bg-white p-6 fintech-shadow border border-white">
+<h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Critical Signals</h4>
+<div class="space-y-4">
+<div class="flex gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white fintech-shadow text-amber-500">
+<span class="material-symbols-outlined !text-xl">warning</span>
+</div>
+<div>
+<p class="text-[13px] font-extrabold text-slate-900">Tech Quota Warning</p>
+<p class="text-[11px] text-slate-400 font-medium mt-0.5 leading-tight">15% reduction predicted in EE tech draws for 2026.</p>
+</div>
+</div>
+<div class="flex gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white fintech-shadow text-emerald-500">
+<span class="material-symbols-outlined !text-xl">bolt</span>
+</div>
+<div>
+<p class="text-[13px] font-extrabold text-slate-900">Regional Fast-track</p>
+<p class="text-[11px] text-slate-400 font-medium mt-0.5 leading-tight">NOC 2173 remains priority for Atlantic provinces.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="rounded-[32px] bg-white p-6 fintech-shadow border border-white overflow-hidden relative">
+<div class="flex items-center justify-between mb-4">
+<h4 class="text-sm font-extrabold text-slate-900">Top Settlement Hub</h4>
+<div class="px-2 py-0.5 rounded bg-slate-900 text-white text-[9px] font-black uppercase">Toronto</div>
+</div>
+<div class="relative h-40 w-full overflow-hidden rounded-2xl bg-slate-100 border border-slate-100">
+<div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="relative">
+<div class="h-6 w-6 animate-ping rounded-full bg-primary/20"></div>
+<div class="absolute inset-0 h-6 w-6 rounded-full bg-primary border-4 border-white shadow-lg"></div>
+</div>
+</div>
+<div class="absolute bottom-3 left-3 right-3 bg-white/95 backdrop-blur-md p-3 rounded-xl fintech-shadow border border-white/50">
+<div class="flex justify-between items-center mb-1.5">
+<span class="text-[10px] font-bold text-slate-500 uppercase">Employment Match</span>
+<span class="text-[10px] font-black text-slate-900">92%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full w-[92%] bg-primary rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full rounded-2xl bg-slate-900 py-4 text-sm font-black text-white shadow-2xl hover:bg-slate-800 transition-all hover:translate-y-[-2px] active:translate-y-0">
+                            Book Strategic Consultation
+                        </button>
+</div>
+</aside>
+</div>
+</main>
+<footer class="mt-20 border-t border-slate-200 py-10 px-12 bg-white/50">
+<div class="max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex items-center gap-4 opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all cursor-pointer">
+<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-white relative">
+<div class="winged-cow-logo scale-50">
+<div class="wing-l !w-8 !h-6 !-left-4 !-top-1"></div>
+<span class="material-symbols-outlined cow-body font-bold !text-xl">pest_control_rodent</span>
+<div class="wing-r !w-8 !h-6 !-right-4 !-top-1"></div>
+</div>
+</div>
+<span class="text-sm font-black tracking-tight uppercase">Moove Intelligence</span>
+</div>
+<div class="flex gap-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+<a class="hover:text-primary transition-colors" href="#">Data Privacy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="hover:text-primary transition-colors" href="#">Policy Change Log</a>
+</div>
+<p class="text-[11px] font-bold text-slate-400">© 2024 MOOVE AI. ALL RIGHTS RESERVED.</p>
+</div>
+</footer>
+</div>
+
+</body></html>
