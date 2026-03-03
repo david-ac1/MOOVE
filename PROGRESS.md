@@ -90,16 +90,18 @@ None! Everything is working as expected.
 
 ### 📝 Notes for Tomorrow
 
-**Before Starting Day 2:**
-1. Get Anthropic API key from https://console.anthropic.com/
-2. Add to backend/.env file: `ANTHROPIC_API_KEY=your_key_here`
-3. Consider signing up for DigitalOcean account to get Gradient™ AI access
-4. Review database schema in IMPLEMENTATION_PLAN.md
+**MANDATORY Setup Before Day 2:**
+1. ✅ **Sign up for DigitalOcean account** - https://cloud.digitalocean.com/registrations/new
+2. ✅ **Claim $200 free credits** (usually auto-applied for new accounts)
+3. ✅ **Access DigitalOcean Gradient™ AI** - https://cloud.digitalocean.com/ai
+4. ✅ **Get API credentials** for Gradient™ AI
+5. ✅ Add to backend/.env file: `DIGITALOCEAN_GRADIENT_API_KEY=your_key_here`
+6. Review database schema in IMPLEMENTATION_PLAN.md
 
-**Optional Setup Tonight:**
-- Sign up for DigitalOcean account (if not done already)
-- Claim $200 free credits
-- Explore DigitalOcean Gradient™ AI documentation
+**Optional (Development Fallback):**
+- Get Anthropic API key from https://console.anthropic.com/
+- Add to backend/.env: `ANTHROPIC_API_KEY=your_key_here`
+- Use ONLY for local testing if DO Gradient™ AI has issues
 
 ### 🎉 Win of the Day
 
