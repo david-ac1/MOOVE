@@ -9,6 +9,9 @@ import os
 from datetime import datetime
 import httpx
 
+# Import visa rules data
+from app.data import get_visa_rules, get_available_countries, VISA_RULES_DB
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Moove API",
@@ -189,67 +192,13 @@ class SimulationEngine:
         
     def _load_visa_rules(self) -> Dict:
         """
-        Load visa framework rules
-        TODO: Move to JSON file or database
+        Load visa framework rules from data module
         """
-        return {
-            "CA": {
-                "name": "Canada",
-                "pathways": {
-                    "express_entry": {
-                        "phases": [
-                            {
-                                "phase_name": "Job Search & Work Permit",
-                                "duration_years": 2,
-                                "visa_or_status": "Closed Work Permit",
-                                "risk_level": "amber",
-                                "key_constraints": [
-                                    "Need job offer from Canadian employer",
-                                    "LMIA approval required",
-                                    "Language test (CLB 7+)"
-                                ]
-                            },
-                            {
-                                "phase_name": "Permanent Residency Application",
-                                "duration_years": 2,
-                                "visa_or_status": "PR Application Processing",
-                                "risk_level": "amber",
-                                "key_constraints": [
-                                    "1 year Canadian work experience",
-                                    "CRS score 470+",
-                                    "Medical exam & police clearance"
-                                ]
-                            },
-                            {
-                                "phase_name": "Permanent Resident",
-                                "duration_years": 3,
-                                "visa_or_status": "Permanent Resident",
-                                "risk_level": "green",
-                                "key_constraints": [
-                                    "Maintain residency (730 days in 5 years)"
-                                ]
-                            },
-                            {
-                                "phase_name": "Citizenship Eligible",
-                                "duration_years": 1,
-                                "visa_or_status": "Citizenship Application",
-                                "risk_level": "green",
-                                "key_constraints": [
-                                    "3 years as PR (1095 days)",
-                                    "Language test",
-                                    "Citizenship test"
-                                ]
-                            }
-                        ]
-                    }
-                }
-            },
-            # Add more countries here
-        }
+        return VISA_RULES_DB
     
     async def generate_pathway(self, intake_data: IntakeData) -> List[TimelinePhase]:
         """
-        Generate migration pathway timeline
+        Generate migration pathway timeline based on user profile
         """
         
         country_code = intake_data.target_country
@@ -257,30 +206,49 @@ class SimulationEngine:
         if country_code not in self.visa_rules:
             raise HTTPException(status_code=400, detail=f"Country {country_code} not supported yet")
         
-        # Select pathway based on user profile (simplified for MVP)
-        pathway = self.visa_rules[country_code]["pathways"]["express_entry"]
+        country_rules = self.visa_rules[country_code]
+        
+        # Select best pathway based on user profile
+        pathway_key = self._select_best_pathway(intake_data, country_rules)
+        pathway = country_rules["pathways"][pathway_key]
         
         # Generate timeline phases
         timeline = []
         current_year = 0
         
-        for phase_template in pathway["phases"]:
+        for i, phase_data in enumerate(pathway["phases"]):
+            # Calculate duration (convert months to years)
+            duration_months = phase_data.get("duration_months", 12)
+            duration_years = round(duration_months / 12, 1)
+            
             # Calculate years
             start_year = current_year
-            end_year = current_year + phase_template["duration_years"]
+            end_year = round(current_year + duration_years, 1)
+            
+            # Determine risk level based on phase requirements
+            risk_level = self._calculate_risk_level(phase_data, i, len(pathway["phases"]))
+            
+            # Extract key constraints
+            requirements = phase_data.get("requirements", [])
+            if isinstance(requirements, dict):
+                key_constraints = [f"{k}: {v}" for k, v in requirements.items()]
+            elif isinstance(requirements, list):
+                key_constraints = requirements
+            else:
+                key_constraints = [str(requirements)]
             
             # Generate explanation using AI
             explanation = await self._generate_phase_explanation(
-                phase_template, intake_data
+                phase_data, intake_data, pathway
             )
             
             timeline.append(TimelinePhase(
-                phase_name=phase_template["phase_name"],
+                phase_name=phase_data["name"],
                 start_year=start_year,
                 end_year=end_year,
-                visa_or_status=phase_template["visa_or_status"],
-                risk_level=phase_template["risk_level"],
-                key_constraints=phase_template["key_constraints"],
+                visa_or_status=phase_data.get("status", phase_data.get("name", "Processing")),
+                risk_level=risk_level,
+                key_constraints=key_constraints[:3],  # Limit to 3 main constraints
                 explanation=explanation
             ))
             
@@ -288,14 +256,72 @@ class SimulationEngine:
             
         return timeline
     
+    def _select_best_pathway(self, intake_data: IntakeData, country_rules: Dict) -> str:
+        """
+        Select the most suitable pathway based on user profile
+        """
+        age = intake_data.age_bracket
+        education = intake_data.education_level
+        goal = intake_data.migration_goal
+        
+        pathways = country_rules["pathways"]
+        
+        # Selection logic based on profile
+        if goal == "study" or age in ["18-24", "25-34"] and education in ["high_school", "bachelors"]:
+            # Prefer study route for younger applicants or those seeking study
+            if "study_route" in pathways or "study_permit" in pathways:
+                return "study_route" if "study_route" in pathways else "study_permit"
+        
+        if education in ["masters", "phd"] and age in ["25-34", "35-44"]:
+            # Prefer direct skilled migration for highly educated
+            if "express_entry" in pathways:
+                return "express_entry"
+            if "eu_blue_card" in pathways:
+                return "eu_blue_card"
+            if "skilled_independent" in pathways:
+                return "skilled_independent"
+        
+        # Default to first available pathway
+        return list(pathways.keys())[0]
+    
+    def _calculate_risk_level(self, phase_data: Dict, phase_index: int, total_phases: int) -> str:
+        """
+        Calculate risk level for a phase
+        """
+        # Early phases (job search, applications) - higher risk
+        if phase_index < total_phases // 2:
+            return "amber"
+        
+        # Later phases (PR, citizenship) - lower risk
+        if "Permanent" in phase_data.get("name", "") or "Citizenship" in phase_data.get("name", ""):
+            return "green"
+        
+        # Check for success rate indicators
+        success_rate = phase_data.get("success_rate", "")
+        if success_rate and isinstance(success_rate, str):
+            percentage = int(success_rate.rstrip("%"))
+            if percentage >= 75:
+                return "green"
+            elif percentage >= 50:
+                return "amber"
+            else:
+                return "red"
+        
+        return "amber"
+    
     async def _generate_phase_explanation(
         self, 
-        phase_template: Dict, 
-        intake_data: IntakeData
+        phase_data: Dict, 
+        intake_data: IntakeData,
+        pathway: Dict
     ) -> str:
         """
         Generate human-readable explanation for a phase
         """
+        
+        duration_months = phase_data.get("duration_months", 12)
+        requirements = phase_data.get("requirements", [])
+        costs = phase_data.get("costs", "N/A")
         
         prompt = f"""
         Explain this migration phase in 2-3 sentences for someone with this profile:
@@ -304,21 +330,23 @@ class SimulationEngine:
         - Profession: {intake_data.profession_category}
         - Goal: {intake_data.migration_goal}
         
-        Phase: {phase_template['phase_name']}
-        Status: {phase_template['visa_or_status']}
-        Risk: {phase_template['risk_level']}
+        Phase: {phase_data['name']}
+        Duration: {duration_months} months
+        Requirements: {requirements}
+        Costs: {costs}
         
-        Be informative and encouraging, but never promise outcomes.
+        Be informative, encouraging, and specific to their profile. Never promise outcomes.
         """
         
         try:
             explanation = await ai_client.chat_completion([
                 {"role": "user", "content": prompt}
             ], temperature=0.6, max_tokens=200)
-            return explanation
-        except:
+            return explanation.strip()
+        except Exception as e:
             # Fallback to template explanation
-            return f"During this phase, you'll navigate {phase_template['phase_name']}. This typically takes {phase_template['duration_years']} years."
+            duration_years = round(duration_months / 12, 1)
+            return f"During this {phase_data['name']} phase, you'll need to meet specific requirements over approximately {duration_years} years. The typical costs are {costs}."
 
 # Initialize simulation engine
 simulator = SimulationEngine()
@@ -403,15 +431,21 @@ async def simulate_pathway(data: SimulationRequest):
 @app.get("/api/countries")
 async def get_countries():
     """
-    Get list of supported countries
+    Get list of supported countries with details
     """
-    return {
-        "countries": [
-            {"code": "CA", "name": "Canada", "flag": "🇨🇦"},
-            {"code": "DE", "name": "Germany", "flag": "🇩🇪"},
-            {"code": "AU", "name": "Australia", "flag": "🇦🇺"},
-        ]
-    }
+    countries = []
+    flags = {"CA": "🇨🇦", "DE": "🇩🇪", "AU": "🇦🇺"}
+    
+    for code, rules in VISA_RULES_DB.items():
+        countries.append({
+            "code": code,
+            "name": rules["country_name"],
+            "flag": flags.get(code, "🌍"),
+            "description": rules["description"],
+            "pathways_count": len(rules["pathways"])
+        })
+    
+    return {"countries": countries}
 
 # =============================================================================
 # RUN SERVER
