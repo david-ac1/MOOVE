@@ -50,8 +50,8 @@ class IntakeData(BaseModel):
 
 class TimelinePhase(BaseModel):
     phase_name: str
-    start_year: int
-    end_year: int
+    start_year: float
+    end_year: float
     visa_or_status: str
     risk_level: str  # "green", "amber", "red"
     key_constraints: List[str]
@@ -218,12 +218,25 @@ class SimulationEngine:
         
         for i, phase_data in enumerate(pathway["phases"]):
             # Calculate duration (convert months to years)
-            duration_months = phase_data.get("duration_months", 12)
-            duration_years = round(duration_months / 12, 1)
+            duration_months_raw = phase_data.get("duration_months", 12)
+            
+            # Handle both int and string durations (e.g., "1-6" means 1-6 months)
+            if isinstance(duration_months_raw, str):
+                # Parse range like "1-6" or "6-8"
+                if "-" in duration_months_raw:
+                    parts = duration_months_raw.split("-")
+                    # Take the midpoint of the range
+                    duration_months = (int(parts[0]) + int(parts[1])) / 2
+                else:
+                    duration_months = int(duration_months_raw)
+            else:
+                duration_months = duration_months_raw
+            
+            duration_years = round(duration_months / 12, 1) if duration_months > 0 else 0
             
             # Calculate years
             start_year = current_year
-            end_year = round(current_year + duration_years, 1)
+            end_year = round(current_year + duration_years, 1) if duration_years > 0 else current_year
             
             # Determine risk level based on phase requirements
             risk_level = self._calculate_risk_level(phase_data, i, len(pathway["phases"]))
@@ -418,15 +431,21 @@ async def simulate_pathway(data: SimulationRequest):
     Generate migration pathway simulation
     """
     import uuid
+    import traceback
     
-    timeline = await simulator.generate_pathway(data.intake_data)
-    
-    return SimulationResponse(
-        simulation_id=str(uuid.uuid4()),
-        target_country=data.intake_data.target_country,
-        timeline=timeline,
-        generated_at=datetime.now()
-    )
+    try:
+        timeline = await simulator.generate_pathway(data.intake_data)
+        
+        return SimulationResponse(
+            simulation_id=str(uuid.uuid4()),
+            target_country=data.intake_data.target_country,
+            timeline=timeline,
+            generated_at=datetime.now()
+        )
+    except Exception as e:
+        print(f"ERROR in simulate_pathway: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Simulation error: {str(e)}")
 
 @app.get("/api/countries")
 async def get_countries():
