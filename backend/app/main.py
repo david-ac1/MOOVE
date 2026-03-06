@@ -67,52 +67,8 @@ class SimulationResponse(BaseModel):
 # AI CLIENT (DigitalOcean Gradient™)
 # =============================================================================
 
-class GradientAIClient:
-    def __init__(self):
-        self.api_key = os.getenv("DIGITALOCEAN_GRADIENT_API_KEY")
-        self.endpoint = os.getenv("GRADIENT_ENDPOINT", "https://api.digitalocean.com/v2/ai")
-        
-        # Fallback to Anthropic for testing
-        self.anthropic_key = os.getenv("ANTHROPIC_API_KEY")
-        
-    async def chat_completion(
-        self, 
-        messages: List[Dict[str, str]], 
-        temperature: float = 0.7,
-        max_tokens: int = 1000
-    ) -> str:
-        """
-        Call DigitalOcean Gradient™ AI for chat completion
-        """
-        
-        # TODO: Replace with actual DigitalOcean Gradient™ AI implementation
-        # For now, using Anthropic as a placeholder
-        
-        if self.anthropic_key:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    "https://api.anthropic.com/v1/messages",
-                    headers={
-                        "x-api-key": self.anthropic_key,
-                        "anthropic-version": "2023-06-01",
-                        "content-type": "application/json"
-                    },
-                    json={
-                        "model": "claude-3-5-sonnet-20241022",
-                        "max_tokens": max_tokens,
-                        "temperature": temperature,
-                        "messages": messages
-                    },
-                    timeout=30.0
-                )
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    return data["content"][0]["text"]
-                else:
-                    raise HTTPException(status_code=500, detail="AI service error")
-        
-        raise HTTPException(status_code=500, detail="No AI service configured")
+# Import our AI client with Mock fallback
+from app.services.gradient_ai import GradientAIClient
 
 # Initialize AI client
 ai_client = GradientAIClient()
