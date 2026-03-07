@@ -1,7 +1,8 @@
 // Frontend API Client for Moove Backend
 // Connects Next.js frontend to FastAPI backend
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+console.log('🔧 API Client initialized with base URL:', API_BASE_URL);
 
 // Type definitions
 export interface IntakeSession {

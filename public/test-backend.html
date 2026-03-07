@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Connection Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #0070f3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0051cc;
+        }
+        .success {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .error {
+            color: #ef4444;
+            font-weight: bold;
+        }
+        pre {
+            background: #f3f4f6;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Moove Backend Connection Test</h1>
+    
+    <div class="test-box">
+        <h2>Test 1: Health Check</h2>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <div id="health-result"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>Test 2: Start Intake Session</h2>
+        <button onclick="testIntakeStart()">Test Intake Start</button>
+        <div id="intake-result"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>Test 3: Send Message</h2>
+        <button onclick="testSendMessage()">Test Send Message</button>
+        <div id="message-result"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>Console Logs</h2>
+        <div id="console-logs" style="font-family: monospace; font-size: 12px;"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+        let sessionId = null;
+
+        function log(message, isError = false) {
+            console.log(message);
+            const logsDiv = document.getElementById('console-logs');
+            const time = new Date().toLocaleTimeString();
+            logsDiv.innerHTML += `<div style="color: ${isError ? '#ef4444' : '#10b981'}">[${time}] ${message}</div>`;
+        }
+
+        async function testHealth() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                log('Fetching: ' + API_URL + '/');
+                const response = await fetch(API_URL + '/');
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <p class="success">✅ Success!</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                log('Health check successful: ' + JSON.stringify(data));
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Error: ${error.message}</p>
+                    <pre>${error.stack}</pre>
+                `;
+                log('Health check failed: ' + error.message, true);
+            }
+        }
+
+        async function testIntakeStart() {
+            const resultDiv = document.getElementById('intake-result');
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                log('Fetching: ' + API_URL + '/api/intake/start');
+                const response = await fetch(API_URL + '/api/intake/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                const data = await response.json();
+                sessionId = data.session_id;
+                
+                resultDiv.innerHTML = `
+                    <p class="success">✅ Success!</p>
+                    <p><strong>Session ID:</strong> ${data.session_id}</p>
+                    <p><strong>AI Message:</strong></p>
+                    <pre>${data.message}</pre>
+                `;
+                log('Intake start successful. Session: ' + sessionId);
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Error: ${error.message}</p>
+                    <pre>${error.stack}</pre>
+                `;
+                log('Intake start failed: ' + error.message, true);
+            }
+        }
+
+        async function testSendMessage() {
+            const resultDiv = document.getElementById('message-result');
+            
+            if (!sessionId) {
+                resultDiv.innerHTML = '<p class="error">❌ Please run "Test Intake Start" first!</p>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                log('Sending message to session: ' + sessionId);
+                const response = await fetch(API_URL + '/api/intake/message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        message: "I have a US passport and I'm 28 years old"
+                    })
+                });
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <p class="success">✅ Success!</p>
+                    <p><strong>AI Response:</strong></p>
+                    <pre>${data.response}</pre>
+                    <p><strong>Simulation Ready:</strong> ${data.simulation_ready}</p>
+                `;
+                log('Message sent successfully');
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">❌ Error: ${error.message}</p>
+                    <pre>${error.stack}</pre>
+                `;
+                log('Send message failed: ' + error.message, true);
+            }
+        }
+
+        // Run health check on page load
+        window.addEventListener('load', () => {
+            log('Page loaded. API URL: ' + API_URL);
+            testHealth();
+        });
+    </script>
+</body>
+</html>
