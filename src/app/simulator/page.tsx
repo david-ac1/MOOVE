@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -47,7 +47,7 @@ const getCountryName = (code: string) => {
   return names[code] || code;
 };
 
-export default function SimulatorPage() {
+function SimulatorPageContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams?.get('session_id');
   
@@ -795,5 +795,20 @@ ${phase.key_constraints.map((c, i) => `${i + 1}. ${c}`).join('\n')}
         )}
       </div>
     </div>
+  );
+}
+
+export default function SimulatorPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-[#0f49bd] mb-4"></div>
+          <p className="text-lg font-bold text-slate-700">Loading your migration pathway...</p>
+        </div>
+      </div>
+    }>
+      <SimulatorPageContent />
+    </Suspense>
   );
 }

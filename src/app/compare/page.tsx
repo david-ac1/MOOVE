@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { api, type PathwayComparison } from '@/lib/api';
@@ -14,7 +14,7 @@ const getRiskColor = (risk: string) => {
   }
 };
 
-export default function ComparePage() {
+function ComparePageContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams?.get('session_id');
   
@@ -308,5 +308,20 @@ export default function ComparePage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function ComparePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#FDFCFB]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-[#FF5C00] mb-4"></div>
+          <p className="text-lg font-bold text-slate-700">Loading...</p>
+        </div>
+      </div>
+    }>
+      <ComparePageContent />
+    </Suspense>
   );
 }
