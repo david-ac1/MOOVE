@@ -1,16 +1,21 @@
 # Backend Starter Template
 # Save as: backend/app/main.py
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import os
 from datetime import datetime
 import httpx
+from sqlalchemy.orm import Session
 
 # Import visa rules data
 from app.data import get_visa_rules, get_available_countries, VISA_RULES_DB
+
+# Import database
+from app.database import get_db, init_db
+from app.models import IntakeSession as DBIntakeSession, ConversationMessage, Simulation as DBSimulation, TimelinePhase as DBTimelinePhase
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -18,6 +23,12 @@ app = FastAPI(
     description="AI-Powered Migration Pathway Simulator",
     version="1.0.0"
 )
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on startup"""
+    init_db()
+    print("✅ Database initialized")
 
 # CORS configuration for local development
 app.add_middleware(
@@ -119,51 +130,59 @@ Keep questions conversational. One question at a time.
 Use emojis sparingly but warmly.
 """
 
-# In-memory session storage (use Redis/PostgreSQL in production)
-sessions = {}
-
 class InterviewerAgent:
     def __init__(self):
         self.system_prompt = INTERVIEWER_SYSTEM_PROMPT
         
-    async def process_message(self, session_id: str, user_message: str) -> Dict[str, Any]:
+    async def process_message(self, session_id: str, user_message: str, db: Session) -> Dict[str, Any]:
         """
         Process user message and return agent response
         """
         
-        # Get or create session
-        if session_id not in sessions:
-            sessions[session_id] = {
-                "conversation_history": [],
-                "collected_data": {},
-                "started_at": datetime.now().isoformat()
-            }
+        # Get or create session in database
+        db_session = db.query(DBIntakeSession).filter(DBIntakeSession.session_id == session_id).first()
         
-        session = sessions[session_id]
+        if not db_session:
+            raise HTTPException(status_code=404, detail="Session not found")
         
-        # Add user message to history
-        session["conversation_history"].append({
-            "role": "user",
-            "content": user_message
-        })
+        # Add user message to database
+        user_msg = ConversationMessage(
+            session_id=session_id,
+            role="user",
+            content=user_message
+        )
+        db.add(user_msg)
+        db.commit()
+        
+        # Get conversation history
+        conversation_history = db.query(ConversationMessage)\
+            .filter(ConversationMessage.session_id == session_id)\
+            .order_by(ConversationMessage.timestamp)\
+            .all()
         
         # Build messages for AI
-        messages = [
-            {"role": "user", "content": self.system_prompt}
-        ] + session["conversation_history"]
+        messages = [{"role": "user", "content": self.system_prompt}]
+        messages += [{"role": msg.role, "content": msg.content} for msg in conversation_history]
         
         # Get AI response
         try:
             agent_response = await ai_client.chat_completion(messages)
             
-            # Add agent response to history
-            session["conversation_history"].append({
-                "role": "assistant",
-                "content": agent_response
-            })
+            # Add agent response to database
+            assistant_msg = ConversationMessage(
+                session_id=session_id,
+                role="assistant",
+                content=agent_response
+            )
+            db.add(assistant_msg)
             
             # Check if simulation ready
             simulation_ready = "SIMULATION_READY" in agent_response
+            if simulation_ready:
+                db_session.simulation_ready = 1
+            
+            db_session.updated_at = datetime.utcnow()
+            db.commit()
             
             return {
                 "response": agent_response.replace("SIMULATION_READY", "").strip(),
@@ -378,24 +397,28 @@ async def root():
     }
 
 @app.post("/api/intake/start")
-async def start_intake_session(data: IntakeSessionStart):
+async def start_intake_session(data: IntakeSessionStart, db: Session = Depends(get_db)):
     """
     Initialize a new intake session
     """
     import uuid
     session_id = str(uuid.uuid4())
     
-    # Create session
-    sessions[session_id] = {
-        "conversation_history": [],
-        "collected_data": {},
-        "started_at": datetime.now().isoformat()
-    }
+    # Create session in database
+    db_session = DBIntakeSession(
+        session_id=session_id,
+        collected_data={},
+        simulation_ready=0
+    )
+    db.add(db_session)
+    db.commit()
+    db.refresh(db_session)
     
     # Get initial greeting from agent
     initial_message = await interviewer.process_message(
         session_id, 
-        "Hello, I'm ready to start."
+        "Hello, I'm ready to start.",
+        db
     )
     
     return {
@@ -404,29 +427,43 @@ async def start_intake_session(data: IntakeSessionStart):
     }
 
 @app.post("/api/intake/message")
-async def send_message(data: IntakeMessage):
+async def send_message(data: IntakeMessage, db: Session = Depends(get_db)):
     """
     Send message to interviewer agent
     """
-    if data.session_id not in sessions:
+    # Check if session exists
+    db_session = db.query(DBIntakeSession).filter(DBIntakeSession.session_id == data.session_id).first()
+    if not db_session:
         raise HTTPException(status_code=404, detail="Session not found")
     
-    response = await interviewer.process_message(data.session_id, data.message)
+    response = await interviewer.process_message(data.session_id, data.message, db)
     
     return response
 
 @app.get("/api/intake/session/{session_id}")
-async def get_session(session_id: str):
+async def get_session(session_id: str, db: Session = Depends(get_db)):
     """
     Get session state
     """
-    if session_id not in sessions:
+    db_session = db.query(DBIntakeSession).filter(DBIntakeSession.session_id == session_id).first()
+    if not db_session:
         raise HTTPException(status_code=404, detail="Session not found")
     
-    return sessions[session_id]
+    # Get conversation history
+    messages = db.query(ConversationMessage)\
+        .filter(ConversationMessage.session_id == session_id)\
+        .order_by(ConversationMessage.timestamp)\
+        .all()
+    
+    return {
+        "session_id": db_session.session_id,
+        "created_at": db_session.created_at,
+        "simulation_ready": bool(db_session.simulation_ready),
+        "messages": [{"role": msg.role, "content": msg.content, "timestamp": msg.timestamp} for msg in messages]
+    }
 
 @app.post("/api/simulate")
-async def simulate_pathway(data: SimulationRequest):
+async def simulate_pathway(data: SimulationRequest, db: Session = Depends(get_db)):
     """
     Generate migration pathway simulation
     """
@@ -435,12 +472,44 @@ async def simulate_pathway(data: SimulationRequest):
     
     try:
         timeline = await simulator.generate_pathway(data.intake_data)
+        simulation_id = str(uuid.uuid4())
+        
+        # Save simulation to database
+        db_simulation = DBSimulation(
+            simulation_id=simulation_id,
+            passport=data.intake_data.passport,
+            age_bracket=data.intake_data.age_bracket,
+            education_level=data.intake_data.education_level,
+            profession_category=data.intake_data.profession_category,
+            migration_goal=data.intake_data.migration_goal,
+            target_country=data.intake_data.target_country,
+            time_horizon_years=data.intake_data.time_horizon_years,
+            generated_at=datetime.utcnow()
+        )
+        db.add(db_simulation)
+        db.commit()
+        
+        # Save timeline phases
+        for order, phase in enumerate(timeline):
+            db_phase = DBTimelinePhase(
+                simulation_id=simulation_id,
+                phase_name=phase.phase_name,
+                start_year=phase.start_year,
+                end_year=phase.end_year,
+                visa_or_status=phase.visa_or_status,
+                risk_level=phase.risk_level,
+                key_constraints=phase.key_constraints,
+                explanation=phase.explanation,
+                phase_order=order
+            )
+            db.add(db_phase)
+        db.commit()
         
         return SimulationResponse(
-            simulation_id=str(uuid.uuid4()),
+            simulation_id=simulation_id,
             target_country=data.intake_data.target_country,
             timeline=timeline,
-            generated_at=datetime.now()
+            generated_at=datetime.utcnow()
         )
     except Exception as e:
         print(f"ERROR in simulate_pathway: {str(e)}")
