@@ -9,13 +9,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Database URL (SQLite for MVP, PostgreSQL for production)
+# Database URL (SQLite for local dev, PostgreSQL for production)
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./moove.db")
+
+# Render.com uses postgres:// but SQLAlchemy 1.4+ requires postgresql://
+# Convert if needed
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 # Create engine
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {},
+    pool_pre_ping=True  # Helps with connection issues in production
 )
 
 # Create SessionLocal class

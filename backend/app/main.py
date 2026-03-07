@@ -30,10 +30,12 @@ async def startup_event():
     init_db()
     print("✅ Database initialized")
 
-# CORS configuration for local development
+# CORS configuration - allow frontend URLs
+import os
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins during development
+    allow_origins=CORS_ORIGINS if CORS_ORIGINS != ["*"] else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
