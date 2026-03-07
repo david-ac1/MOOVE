@@ -21,6 +21,7 @@ export default function ComparePage() {
   const [comparisons, setComparisons] = useState<PathwayComparison[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [generatingFor, setGeneratingFor] = useState<string | null>(null);
 
   useEffect(() => {
     loadComparisons();
@@ -51,6 +52,23 @@ export default function ComparePage() {
       setError(err instanceof Error ? err.message : 'Failed to load comparisons');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSimulatePathway = async (countryCode: string) => {
+    const sid = sessionId || localStorage.getItem('intake_session_id');
+    if (!sid) return;
+
+    setGeneratingFor(countryCode);
+
+    try {
+      console.log(`🔵 Generating simulation for ${countryCode}...`);
+      // The simulator will automatically generate or load the simulation for this country
+      // We just navigate to it with the session_id
+      window.location.href = `/simulator?session_id=${sid}&country=${countryCode}`;
+    } catch (err) {
+      console.error('Error:', err);
+      setGeneratingFor(null);
     }
   };
 
@@ -256,16 +274,24 @@ export default function ComparePage() {
                   </ul>
                 </div>
                 
-                <Link 
-                  href={`/simulator?session_id=${sessionId || localStorage.getItem('intake_session_id')}`}
-                  className="mt-auto"
+                <button 
+                  onClick={() => handleSimulatePathway(comparison.country_code)}
+                  disabled={generatingFor === comparison.country_code}
+                  className={`mt-auto w-full py-4 ${isRecommended ? 'bg-white text-black hover:bg-[#00F0FF]' : 'bg-black text-white hover:bg-[#FF5C00]'} rounded-2xl font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-wait`}
                 >
-                  <button className={`w-full py-4 ${isRecommended ? 'bg-white text-black hover:bg-[#00F0FF]' : 'bg-black text-white hover:bg-[#FF5C00]'} rounded-2xl font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg`}>
-                    {isRecommended && <span className="material-symbols-outlined text-sm">check_circle</span>}
-                    Simulate Pathway
-                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                  </button>
-                </Link>
+                  {generatingFor === comparison.country_code ? (
+                    <>
+                      <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-current"></span>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      {isRecommended && <span className="material-symbols-outlined text-sm">check_circle</span>}
+                      Simulate Pathway
+                      <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    </>
+                  )}
+                </button>
               </div>
             );
           })}

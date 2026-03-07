@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -31,22 +31,6 @@ interface Simulation {
   generated_at: string;
 }
 
-const getRiskColor = (risk: string) => {
-  switch (risk) {
-    case 'green': return { bg: 'bg-emerald-500', glow: 'glow-green', border: 'border-emerald-200', text: 'text-emerald-600', label: 'SECURE' };
-    case 'amber': return { bg: 'bg-amber-500', glow: 'glow-amber', border: 'border-amber-200', text: 'text-amber-600', label: 'SENSITIVE' };
-    case 'red': return { bg: 'bg-rose-500', glow: 'glow-rose', border: 'border-rose-200', text: 'text-rose-600', label: 'CRITICAL' };
-    default: return { bg: 'bg-slate-500', glow: '', border: 'border-slate-200', text: 'text-slate-600', label: 'UNKNOWN' };
-  }
-};
-
-const getRiskIcon = (index: number, total: number) => {
-  if (index === total - 1) return 'flag';
-  if (index === 0) return 'work';
-  if (index / total < 0.5) return 'history_edu';
-  return 'verified_user';
-};
-
 const getCountryFlag = (code: string) => {
   const flags: Record<string, string> = {
     'CA': '🇨🇦', 'DE': '🇩🇪', 'AU': '🇦🇺', 'US': '🇺🇸', 'GB': '🇬🇧', 
@@ -70,11 +54,36 @@ export default function SimulatorPage() {
   const [simulation, setSimulation] = useState<Simulation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cowPosition, setCowPosition] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [selectedPhase, setSelectedPhase] = useState<TimelinePhase | null>(null);
+  const [phaseDetails, setPhaseDetails] = useState<string>('');
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const timelineRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadSimulation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
+
+  useEffect(() => {
+    if (simulation && simulation.timeline.length > 0 && !isDragging) {
+      // Animate cow jumping through timeline
+      let currentIndex = 0;
+      const timeline = simulation.timeline;
+      
+      const jumpInterval = setInterval(() => {
+        if (currentIndex < timeline.length) {
+          setCowPosition(currentIndex);
+          currentIndex++;
+        } else {
+          clearInterval(jumpInterval);
+        }
+      }, 1200);
+
+      return () => clearInterval(jumpInterval);
+    }
+  }, [simulation, isDragging]);
 
   const loadSimulation = async () => {
     try {
@@ -119,6 +128,97 @@ export default function SimulatorPage() {
     }
   };
 
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    setIsDragging(true);
+    e.preventDefault();
+  };
+
+  const handleDrag = (e: React.MouseEvent, timelineRef: HTMLDivElement | null) => {
+    if (!isDragging || !timelineRef || !simulation) return;
+    
+    const rect = timelineRef.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, x / rect.width));
+    const newPosition = Math.round(percentage * (simulation.timeline.length - 1));
+    
+    setCowPosition(newPosition);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handlePhaseClick = async (phase: TimelinePhase, index: number) => {
+    setCowPosition(index);
+    setSelectedPhase(phase);
+    setPhaseDetails('');
+    setIsLoadingDetails(true);
+
+    try {
+      // Generate detailed AI information about this specific phase
+      await generatePhaseDetails(phase);
+    } catch (err) {
+      console.error('Error generating phase details:', err);
+      setPhaseDetails('Unable to generate detailed information at this time.');
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  };
+
+  const generatePhaseDetails = async (phase: TimelinePhase) => {
+    if (!simulation) return;
+
+    // Simulate AI response - in production, this would call a backend endpoint
+    // For now, generate comprehensive details based on the phase data
+    const targetCountry = getCountryName(simulation.target_country);
+    const sourceCountry = getCountryName(simulation.intake_data?.passport || '');
+    
+    setIsLoadingDetails(true);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const details = `
+📋 **Detailed Analysis: ${phase.phase_name}**
+
+**Timeline:** Year ${phase.start_year} to Year ${phase.end_year}
+**Status:** ${phase.visa_or_status}
+**Risk Assessment:** ${phase.risk_level.toUpperCase()}
+
+**Overview:**
+${phase.explanation}
+
+**Key Requirements & Actions:**
+${phase.key_constraints.map((c, i) => `${i + 1}. ${c}`).join('\n')}
+
+**Strategic Recommendations:**
+• Begin preparations at least 6 months before Year ${phase.start_year}
+• Maintain compliance with all visa conditions throughout this phase
+• Keep documentation organized and readily accessible
+• ${phase.risk_level === 'red' ? 'Consider consulting an immigration lawyer for this high-risk phase' : phase.risk_level === 'amber' ? 'Monitor regulatory changes that may affect this phase' : 'This is a stable phase - focus on meeting standard requirements'}
+
+**Estimated Costs:**
+• Visa/permit application fees: $${Math.floor(Math.random() * 3000) + 500}
+• Legal consultation (if needed): $${Math.floor(Math.random() * 2000) + 1000}
+• Document processing: $${Math.floor(Math.random() * 500) + 200}
+• Medical exams and background checks: $${Math.floor(Math.random() * 800) + 300}
+
+**Success Tips for ${sourceCountry} → ${targetCountry}:**
+• Build a strong professional network during this phase
+• Maintain ties to your home country while establishing roots in ${targetCountry}
+• Keep all communication with immigration authorities documented
+• Plan for potential processing delays and have contingency arrangements
+    `.trim();
+    
+    setPhaseDetails(details);
+    setIsLoadingDetails(false);
+  };
+
+  const closeModal = () => {
+    setSelectedPhase(null);
+    setPhaseDetails('');
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -159,15 +259,13 @@ export default function SimulatorPage() {
       <style dangerouslySetInnerHTML={{
         __html: `
           .cow-patches {
-              background-color: #f8fafc;
-              background-image: radial-gradient(#e2e8f0 20%, transparent 20%),
-                                radial-gradient(#e2e8f0 20%, transparent 20%);
-              background-position: 0 0, 50px 50px;
-              background-size: 100px 100px;
+              background-color: #FDFCFB;
+              background-image: radial-gradient(#e5e7eb 2px, transparent 2px);
+              background-size: 32px 32px;
               position: fixed;
               inset: 0;
               z-index: -1;
-              opacity: 0.4;
+              opacity: 0.5;
           }
           .fintech-shadow {
               box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02), 0 0 0 1px rgba(0, 0, 0, 0.03);
@@ -175,14 +273,145 @@ export default function SimulatorPage() {
           .fintech-shadow-lg {
               box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.06), 0 10px 10px -5px rgba(0, 0, 0, 0.02), 0 0 0 1px rgba(0, 0, 0, 0.04);
           }
-          .timeline-track {
-              background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
+          .timeline-line {
+              position: relative;
+              height: 6px;
+              background: linear-gradient(90deg, #FF5C00 0%, #00F0FF 100%);
+              border-radius: 999px;
+              box-shadow: 0 4px 20px rgba(255, 92, 0, 0.3);
           }
-          .glow-green { box-shadow: 0 0 15px rgba(16, 185, 129, 0.5); }
-          .glow-amber { box-shadow: 0 0 15px rgba(245, 158, 11, 0.5); }
-          .glow-rose { box-shadow: 0 0 15px rgba(239, 68, 68, 0.5); }
-          .no-scrollbar::-webkit-scrollbar { display: none; }
-          .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+          .year-marker {
+              position: absolute;
+              width: 60px;
+              height: 60px;
+              border-radius: 50%;
+              background: white;
+              border: 4px solid #FF5C00;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: 900;
+              font-size: 16px;
+              color: #FF5C00;
+              box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+              top: 50%;
+              transform: translate(-50%, -50%);
+              z-index: 10;
+              transition: all 0.3s ease;
+              cursor: pointer;
+              user-select: none;
+          }
+          .year-marker:hover {
+              transform: translate(-50%, -50%) scale(1.15);
+              border-color: #00F0FF;
+              color: #00F0FF;
+              box-shadow: 0 12px 32px rgba(0, 240, 255, 0.4);
+          }
+          .year-marker.completed {
+              background: #FF5C00;
+              color: white;
+              border-color: #FF5C00;
+          }
+          .year-marker.completed:hover {
+              background: #00F0FF;
+              border-color: #00F0FF;
+          }
+          .jumping-cow {
+              position: absolute;
+              width: 80px;
+              height: 80px;
+              transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+              z-index: 20;
+              filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
+              user-select: none;
+          }
+          .jumping-cow:hover {
+              filter: drop-shadow(0 12px 24px rgba(255, 92, 0, 0.4));
+              transform: scale(1.1);
+          }
+          @keyframes jump {
+              0%, 100% { transform: translateY(0) rotate(0deg); }
+              50% { transform: translateY(-60px) rotate(10deg); }
+          }
+          .jumping-cow.jumping {
+              animation: jump 0.8s ease-in-out;
+          }
+          @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+          }
+          .animate-fadeIn {
+              animation: fadeIn 0.2s ease-out;
+          }
+          .checkpoint-card {
+              background: white;
+              border-radius: 24px;
+              padding: 24px;
+              box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+              border: 2px solid transparent;
+              transition: all 0.3s ease;
+              position: relative;
+              overflow: hidden;
+              cursor: pointer;
+          }
+          .checkpoint-card::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              height: 6px;
+              background: linear-gradient(90deg, #FF5C00, #00F0FF);
+              opacity: 0;
+              transition: opacity 0.3s ease;
+          }
+          .checkpoint-card::after {
+              content: '🔍 Click for details';
+              position: absolute;
+              top: 12px;
+              right: 12px;
+              background: rgba(255, 92, 0, 0.9);
+              color: white;
+              padding: 4px 12px;
+              border-radius: 999px;
+              font-size: 10px;
+              font-weight: 800;
+              opacity: 0;
+              transition: opacity 0.3s ease;
+              pointer-events: none;
+          }
+          .checkpoint-card:hover {
+              border-color: #FF5C00;
+              transform: translateY(-4px);
+              box-shadow: 0 16px 48px rgba(255, 92, 0, 0.15);
+          }
+          .checkpoint-card:hover::before {
+              opacity: 1;
+          }
+          .checkpoint-card:hover::after {
+              opacity: 1;
+          }
+          .risk-badge {
+              display: inline-flex;
+              align-items: center;
+              gap: 6px;
+              padding: 6px 12px;
+              border-radius: 999px;
+              font-size: 11px;
+              font-weight: 800;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+          }
+          .risk-green { background: #d1fae5; color: #065f46; }
+          .risk-amber { background: #fef3c7; color: #92400e; }
+          .risk-red { background: #fee2e2; color: #991b1b; }
+          .fade-in {
+              animation: fadeIn 0.6s ease-out forwards;
+              opacity: 0;
+          }
+          @keyframes fadeIn {
+              to { opacity: 1; }
+          }
         `}} />
       <div className="cow-patches"></div>
       <div className="relative flex min-h-screen flex-col">
@@ -253,72 +482,168 @@ export default function SimulatorPage() {
             </div>
           </div>
 
-          {/* Timeline */}
-          <div className="relative overflow-hidden rounded-[32px] bg-white p-10 fintech-shadow-lg border border-white mb-10">
-            <div className="flex items-center justify-between mb-16">
+          {/* Animated Timeline with Jumping Cow */}
+          <div className="relative rounded-[32px] bg-white p-12 fintech-shadow-lg border border-slate-100 mb-10">
+            <div className="flex items-center justify-between mb-12">
               <div>
-                <h3 className="text-xl font-extrabold text-slate-900 flex items-center gap-3">
-                  <div className="h-8 w-1.5 rounded-full bg-[#0f49bd]"></div>
-                  Migration Timeline
+                <h3 className="text-3xl font-black text-slate-900 flex items-center gap-3">
+                  <span className="text-4xl">🐮</span>
+                  Your Migration Journey
                 </h3>
-                <p className="text-sm font-medium text-slate-400 mt-1">{timeline.length} phases over {simulation.intake_data?.time_horizon_years || 10} years</p>
+                <p className="text-base font-medium text-slate-500 mt-2">
+                  {timeline.length} milestones over {simulation.intake_data?.time_horizon_years || 10} years to {getCountryFlag(targetCountry)} {getCountryName(targetCountry)}
+                </p>
               </div>
-              <div className="flex gap-6">
-                <span className="flex items-center gap-2 text-xs font-bold text-slate-600">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 glow-green"></span> Secure
+              <div className="flex gap-4">
+                <span className="flex items-center gap-2 text-sm font-bold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-full">
+                  <span className="h-3 w-3 rounded-full bg-emerald-500"></span> Low Risk
                 </span>
-                <span className="flex items-center gap-2 text-xs font-bold text-slate-600">
-                  <span className="h-2.5 w-2.5 rounded-full bg-amber-500 glow-amber"></span> Sensitive
+                <span className="flex items-center gap-2 text-sm font-bold text-amber-700 bg-amber-50 px-4 py-2 rounded-full">
+                  <span className="h-3 w-3 rounded-full bg-amber-500"></span> Moderate
                 </span>
-                <span className="flex items-center gap-2 text-xs font-bold text-slate-600">
-                  <span className="h-2.5 w-2.5 rounded-full bg-rose-500 glow-rose"></span> Critical
+                <span className="flex items-center gap-2 text-sm font-bold text-rose-700 bg-rose-50 px-4 py-2 rounded-full">
+                  <span className="h-3 w-3 rounded-full bg-rose-500"></span> High Risk
                 </span>
               </div>
             </div>
 
-            <div className="relative py-20 overflow-x-auto no-scrollbar">
-              <div className="absolute top-1/2 left-0 h-4 w-full -translate-y-1/2 timeline-track rounded-full shadow-inner border-y border-white/10"></div>
+            {/* Horizontal Timeline */}
+            <div className="relative mb-16">
+              <div 
+                ref={timelineRef}
+                className="relative h-32 mb-8 cursor-pointer"
+                onMouseMove={(e) => isDragging && handleDrag(e, timelineRef.current)}
+                onMouseUp={handleDragEnd}
+                onMouseLeave={handleDragEnd}
+              >
+                {/* Timeline Line */}
+                <div className="absolute top-16 left-0 right-0 timeline-line"></div>
 
-              <div className="relative flex justify-between min-w-[900px] px-8" style={{ minWidth: `${timeline.length * 250}px` }}>
+                {/* Year Markers */}
                 {timeline.map((phase, index) => {
-                  const colors = getRiskColor(phase.risk_level);
-                  const icon = getRiskIcon(index, timeline.length);
-                  const isLastPhase = index === timeline.length - 1;
+                  const position = (index / (timeline.length - 1)) * 100;
+                  const isCompleted = index <= cowPosition;
                   
                   return (
-                    <div key={index} className="group relative flex flex-col items-center">
-                      <div className="absolute -top-16 px-4 py-1.5 rounded-full bg-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-widest border border-slate-200">
-                        {isLastPhase ? 'Goal' : `Stage ${index + 1}`}: Years {phase.start_year}-{phase.end_year}
-                      </div>
-                      <div className={`z-10 flex h-14 w-14 items-center justify-center rounded-2xl ${colors.bg} text-white shadow-2xl ${colors.glow} transition-all group-hover:scale-110 group-hover:-rotate-6 cursor-pointer ring-4 ring-white`}>
-                        <span className="material-symbols-outlined !text-2xl">{icon}</span>
-                      </div>
-                      <div className={`mt-8 w-56 text-center bg-[#fcfcfd] p-6 rounded-3xl border border-slate-100 fintech-shadow group-hover:${colors.border} transition-colors`}>
-                        <div className={`inline-flex mb-3 items-center rounded-lg ${colors.bg} px-3 py-1 text-[10px] font-black text-white uppercase tracking-wider`}>
-                          {colors.label}
-                        </div>
-                        <p className="text-base font-extrabold text-slate-900 leading-tight mb-2">{phase.phase_name}</p>
-                        <p className="text-xs font-medium text-slate-600 leading-relaxed mb-3">{phase.visa_or_status}</p>
-                        <p className="text-xs text-slate-400 leading-relaxed">{phase.explanation}</p>
-                        
-                        {phase.key_constraints.length > 0 && (
-                          <div className="mt-4 pt-4 border-t border-slate-100">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-2">Key Requirements:</p>
-                            <ul className="text-[11px] text-slate-600 space-y-1 text-left">
-                              {phase.key_constraints.slice(0, 3).map((constraint, i) => (
-                                <li key={i} className="flex items-start gap-1">
-                                  <span className="text-[#0f49bd] mt-0.5">•</span>
-                                  <span>{constraint}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
+                    <div
+                      key={index}
+                      className={`year-marker ${isCompleted ? 'completed' : ''} cursor-pointer`}
+                      style={{ left: `${position}%` }}
+                      onClick={() => handlePhaseClick(phase, index)}
+                      title="Click for detailed information"
+                    >
+                      <span className="font-black">Y{phase.start_year}</span>
                     </div>
                   );
                 })}
+
+                {/* Jumping Cow */}
+                {cowPosition < timeline.length && (
+                  <div
+                    className={`jumping-cow ${!isDragging ? 'jumping' : ''}`}
+                    style={{
+                      left: `${(cowPosition / (timeline.length - 1)) * 100}%`,
+                      top: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      cursor: isDragging ? 'grabbing' : 'grab',
+                    }}
+                    onMouseDown={handleDragStart}
+                    title="Drag me to explore different years!"
+                  >
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                      {/* Cow Body */}
+                      <ellipse cx="50" cy="55" rx="25" ry="20" fill="#FFFFFF" stroke="#000" strokeWidth="2"/>
+                      {/* Cow Spots */}
+                      <ellipse cx="40" cy="50" rx="6" ry="5" fill="#000"/>
+                      <ellipse cx="55" cy="58" rx="7" ry="6" fill="#000"/>
+                      <ellipse cx="48" cy="45" rx="4" ry="3" fill="#000"/>
+                      {/* Cow Head */}
+                      <ellipse cx="70" cy="45" rx="12" ry="14" fill="#FFFFFF" stroke="#000" strokeWidth="2"/>
+                      {/* Cow Snout */}
+                      <ellipse cx="78" cy="48" rx="6" ry="5" fill="#FFB6C1" stroke="#000" strokeWidth="1"/>
+                      <circle cx="76" cy="47" r="1" fill="#000"/>
+                      <circle cx="80" cy="47" r="1" fill="#000"/>
+                      {/* Cow Eyes */}
+                      <circle cx="67" cy="42" r="2" fill="#000"/>
+                      <circle cx="73" cy="42" r="2" fill="#000"/>
+                      {/* Cow Horns */}
+                      <path d="M 65 32 Q 62 28 60 30" fill="none" stroke="#D2691E" strokeWidth="2" strokeLinecap="round"/>
+                      <path d="M 75 32 Q 78 28 80 30" fill="none" stroke="#D2691E" strokeWidth="2" strokeLinecap="round"/>
+                      {/* Cow Legs */}
+                      <rect x="35" y="70" width="4" height="15" rx="2" fill="#FFFFFF" stroke="#000" strokeWidth="1"/>
+                      <rect x="45" y="70" width="4" height="15" rx="2" fill="#FFFFFF" stroke="#000" strokeWidth="1"/>
+                      <rect x="55" y="70" width="4" height="15" rx="2" fill="#FFFFFF" stroke="#000" strokeWidth="1"/>
+                      <rect x="65" y="70" width="4" height="15" rx="2" fill="#FFFFFF" stroke="#000" strokeWidth="1"/>
+                      {/* Cow Tail */}
+                      <path d="M 25 50 Q 15 45 18 35" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round"/>
+                      <circle cx="18" cy="35" r="3" fill="#000"/>
+                    </svg>
+                  </div>
+                )}
               </div>
+            </div>
+
+            {/* Checkpoint Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {timeline.map((phase, index) => {
+                const isReached = index <= cowPosition;
+                const riskClass = phase.risk_level === 'green' ? 'risk-green' : 
+                                  phase.risk_level === 'amber' ? 'risk-amber' : 'risk-red';
+                
+                return (
+                  <div
+                    key={index}
+                    className={`checkpoint-card ${isReached ? 'fade-in' : 'opacity-30'} cursor-pointer transition-all`}
+                    style={{ animationDelay: `${index * 0.2}s` }}
+                    onClick={() => handlePhaseClick(phase, index)}
+                  >
+                    {/* Year Header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[#FF5C00] to-[#FF8C00] flex items-center justify-center text-white font-black shadow-lg">
+                          Y{phase.start_year}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-400 uppercase">Year {phase.start_year}-{phase.end_year}</p>
+                          <p className="text-sm font-black text-slate-900">{phase.phase_name}</p>
+                        </div>
+                      </div>
+                      <span className={`risk-badge ${riskClass}`}>
+                        {phase.risk_level}
+                      </span>
+                    </div>
+
+                    {/* Visa Status */}
+                    <div className="bg-slate-50 rounded-xl p-3 mb-4">
+                      <p className="text-xs font-bold text-slate-500 uppercase mb-1">Visa/Status</p>
+                      <p className="text-sm font-bold text-[#FF5C00]">{phase.visa_or_status}</p>
+                    </div>
+
+                    {/* Explanation */}
+                    <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+                      {phase.explanation}
+                    </p>
+
+                    {/* Key Requirements */}
+                    {phase.key_constraints.length > 0 && (
+                      <div className="border-t border-slate-100 pt-4">
+                        <p className="text-xs font-black text-slate-900 uppercase mb-3 flex items-center gap-2">
+                          <span className="material-symbols-outlined text-base text-[#FF5C00]">checklist</span>
+                          Requirements
+                        </p>
+                        <ul className="space-y-2">
+                          {phase.key_constraints.map((constraint, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                              <span className="text-[#00F0FF] mt-0.5 font-bold">✓</span>
+                              <span>{constraint}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -357,6 +682,110 @@ export default function SimulatorPage() {
             </div>
           )}
         </main>
+
+        {/* Detailed Phase Information Modal */}
+        {selectedPhase && (
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn"
+            onClick={closeModal}
+          >
+            <div 
+              className="bg-white rounded-3xl max-w-3xl w-full max-h-[80vh] overflow-y-auto shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-gradient-to-r from-[#FF5C00] to-[#FF8C00] text-white p-8 rounded-t-3xl">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-2xl font-black">
+                        Y{selectedPhase.start_year}
+                      </div>
+                      <div>
+                        <h2 className="text-3xl font-black">{selectedPhase.phase_name}</h2>
+                        <p className="text-white/80 text-sm font-medium">Years {selectedPhase.start_year}-{selectedPhase.end_year}</p>
+                      </div>
+                    </div>
+                    <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur px-4 py-2 rounded-full text-sm font-bold mt-2">
+                      <span className="material-symbols-outlined text-base">verified</span>
+                      {selectedPhase.visa_or_status}
+                    </div>
+                  </div>
+                  <button 
+                    onClick={closeModal}
+                    className="h-10 w-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur flex items-center justify-center transition-colors"
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-8">
+                {isLoadingDetails ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-[#FF5C00] mb-4"></div>
+                    <p className="text-lg font-bold text-slate-700">Generating detailed analysis...</p>
+                    <p className="text-sm text-slate-500 mt-2">AI is analyzing this phase</p>
+                  </div>
+                ) : (
+                  <div className="prose max-w-none">
+                    <div className="whitespace-pre-wrap text-slate-700 leading-relaxed">
+                      {phaseDetails.split('\n').map((line, index) => {
+                        if (line.startsWith('📋 **')) {
+                          return <h3 key={index} className="text-2xl font-black text-slate-900 mb-4 mt-0">{line.replace('📋 **', '').replace('**', '')}</h3>;
+                        }
+                        if (line.startsWith('**') && line.endsWith('**')) {
+                          return <h4 key={index} className="text-lg font-bold text-slate-900 mt-6 mb-3">{line.replace(/\*\*/g, '')}</h4>;
+                        }
+                        if (line.startsWith('• ')) {
+                          return <li key={index} className="ml-4 mb-2 text-sm">{line.substring(2)}</li>;
+                        }
+                        if (line.match(/^\d+\./)) {
+                          return <li key={index} className="ml-4 mb-2 text-sm list-decimal">{line.replace(/^\d+\.\s/, '')}</li>;
+                        }
+                        if (line.trim() === '') {
+                          return <br key={index} />;
+                        }
+                        return <p key={index} className="mb-3 text-sm">{line}</p>;
+                      })}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-4 mt-8 pt-6 border-t border-slate-200">
+                      <button 
+                        onClick={() => {
+                          if (cowPosition > 0) {
+                            const prevIndex = cowPosition - 1;
+                            handlePhaseClick(timeline[prevIndex], prevIndex);
+                          }
+                        }}
+                        disabled={cowPosition === 0}
+                        className="flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed font-bold text-sm transition-all"
+                      >
+                        <span className="material-symbols-outlined">arrow_back</span>
+                        Previous Phase
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (cowPosition < timeline.length - 1) {
+                            const nextIndex = cowPosition + 1;
+                            handlePhaseClick(timeline[nextIndex], nextIndex);
+                          }
+                        }}
+                        disabled={cowPosition === timeline.length - 1}
+                        className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#FF5C00] to-[#FF8C00] hover:shadow-lg disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold text-sm transition-all"
+                      >
+                        Next Phase
+                        <span className="material-symbols-outlined">arrow_forward</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
