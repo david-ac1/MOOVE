@@ -83,7 +83,12 @@ export const api = {
     /**
      * Get session history
      */
-    getSession: async (sessionId: string): Promise<any> => {
+    getSession: async (sessionId: string): Promise<{
+      session_id: string;
+      created_at: string;
+      simulation_ready: boolean;
+      messages: Array<{ role: string; content: string; timestamp: string }>;
+    }> => {
       const res = await fetch(`${API_BASE_URL}/api/intake/session/${sessionId}`);
       if (!res.ok) throw new Error('Failed to get session');
       return res.json();
@@ -108,6 +113,39 @@ export const api = {
       body: JSON.stringify({ intake_data: intakeData }),
     });
     if (!res.ok) throw new Error('Failed to generate simulation');
+    return res.json();
+  },
+
+  /**
+   * Generate simulation from an intake session
+   */
+  simulateFromSession: async (sessionId: string): Promise<SimulationResponse> => {
+    const res = await fetch(`${API_BASE_URL}/api/simulate/from-session/${sessionId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ detail: 'Unknown error' }));
+      throw new Error(error.detail || 'Failed to generate simulation');
+    }
+    return res.json();
+  },
+
+  /**
+   * Get all simulations for a session
+   */
+  getSimulationsBySession: async (sessionId: string): Promise<{ simulations: SimulationResponse[] }> => {
+    const res = await fetch(`${API_BASE_URL}/api/simulations/session/${sessionId}`);
+    if (!res.ok) throw new Error('Failed to get simulations');
+    return res.json();
+  },
+
+  /**
+   * Get a specific simulation by ID
+   */
+  getSimulation: async (simulationId: string): Promise<SimulationResponse> => {
+    const res = await fetch(`${API_BASE_URL}/api/simulation/${simulationId}`);
+    if (!res.ok) throw new Error('Failed to get simulation');
     return res.json();
   },
 

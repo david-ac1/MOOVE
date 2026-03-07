@@ -535,6 +535,217 @@ async def get_countries():
     
     return {"countries": countries}
 
+@app.post("/api/simulate/from-session/{session_id}")
+async def simulate_from_session(session_id: str, db: Session = Depends(get_db)):
+    """
+    Generate a simulation by extracting intake data from conversation history
+    """
+    import json
+    
+    # Get session
+    db_session = db.query(DBIntakeSession).filter(DBIntakeSession.session_id == session_id).first()
+    if not db_session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    # Check if simulation ready
+    if not db_session.simulation_ready:
+        raise HTTPException(status_code=400, detail="Intake not complete. Please finish the conversation first.")
+    
+    # Get conversation history
+    messages = db.query(ConversationMessage)\
+        .filter(ConversationMessage.session_id == session_id)\
+        .order_by(ConversationMessage.timestamp)\
+        .all()
+    
+    # Build conversation for AI
+    conversation_text = "\n".join([f"{msg.role}: {msg.content}" for msg in messages])
+    
+    # Use AI to extract structured data
+    extraction_prompt = f"""
+    Extract the intake data from this conversation. Return ONLY valid JSON with these exact fields:
+    {{
+        "passport": "two-letter country code (e.g., IN, US, GB)",
+        "age_bracket": "one of: 18-24, 25-34, 35-44, 45-54, 55+",
+        "education_level": "one of: high_school, bachelors, masters, phd",
+        "profession_category": "user's profession/field",
+        "migration_goal": "one of: study, work, permanent_residency, citizenship",
+        "target_country": "two-letter code (e.g., CA, DE, AU)",
+        "time_horizon_years": integer (5, 10, or 15)
+    }}
+    
+    Conversation:
+    {conversation_text}
+    
+    Return only the JSON object with no additional text.
+    """
+    
+    try:
+        extracted_json = await ai_client.chat_completion([
+            {"role": "user", "content": extraction_prompt}
+        ], temperature=0.1, max_tokens=300)
+        
+        # Parse the JSON
+        intake_data_dict = json.loads(extracted_json.strip())
+        intake_data = IntakeData(**intake_data_dict)
+        
+        # Update collected_data in session
+        db_session.collected_data = intake_data_dict
+        db.commit()
+        
+    except Exception as e:
+        print(f"Error extracting intake data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to extract intake data: {str(e)}")
+    
+    # Generate simulation
+    try:
+        timeline = await simulator.generate_pathway(intake_data)
+        import uuid
+        simulation_id = str(uuid.uuid4())
+        
+        # Save simulation to database
+        db_simulation = DBSimulation(
+            simulation_id=simulation_id,
+            session_id=session_id,  # Link to session
+            passport=intake_data.passport,
+            age_bracket=intake_data.age_bracket,
+            education_level=intake_data.education_level,
+            profession_category=intake_data.profession_category,
+            migration_goal=intake_data.migration_goal,
+            target_country=intake_data.target_country,
+            time_horizon_years=intake_data.time_horizon_years,
+            generated_at=datetime.utcnow()
+        )
+        db.add(db_simulation)
+        db.commit()
+        
+        # Save timeline phases
+        for order, phase in enumerate(timeline):
+            db_phase = DBTimelinePhase(
+                simulation_id=simulation_id,
+                phase_name=phase.phase_name,
+                start_year=phase.start_year,
+                end_year=phase.end_year,
+                visa_or_status=phase.visa_or_status,
+                risk_level=phase.risk_level,
+                key_constraints=phase.key_constraints,
+                explanation=phase.explanation,
+                phase_order=order
+            )
+            db.add(db_phase)
+        db.commit()
+        
+        return SimulationResponse(
+            simulation_id=simulation_id,
+            target_country=intake_data.target_country,
+            timeline=timeline,
+            generated_at=datetime.utcnow()
+        )
+    except Exception as e:
+        print(f"Error generating simulation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate simulation: {str(e)}")
+
+@app.get("/api/simulations/session/{session_id}")
+async def get_simulations_by_session(session_id: str, db: Session = Depends(get_db)):
+    """
+    Get all simulations for a given session
+    """
+    # Get session
+    db_session = db.query(DBIntakeSession).filter(DBIntakeSession.session_id == session_id).first()
+    if not db_session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    # Get simulations
+    simulations = db.query(DBSimulation)\
+        .filter(DBSimulation.session_id == session_id)\
+        .order_by(DBSimulation.created_at.desc())\
+        .all()
+    
+    if not simulations:
+        return {"simulations": [], "message": "No simulations found for this session"}
+    
+    # Build response with timeline data
+    result = []
+    for sim in simulations:
+        # Get timeline phases
+        phases = db.query(DBTimelinePhase)\
+            .filter(DBTimelinePhase.simulation_id == sim.simulation_id)\
+            .order_by(DBTimelinePhase.phase_order)\
+            .all()
+        
+        timeline = [
+            TimelinePhase(
+                phase_name=p.phase_name,
+                start_year=p.start_year,
+                end_year=p.end_year,
+                visa_or_status=p.visa_or_status,
+                risk_level=p.risk_level,
+                key_constraints=p.key_constraints,
+                explanation=p.explanation
+            ) for p in phases
+        ]
+        
+        result.append({
+            "simulation_id": sim.simulation_id,
+            "target_country": sim.target_country,
+            "timeline": timeline,
+            "intake_data": {
+                "passport": sim.passport,
+                "age_bracket": sim.age_bracket,
+                "education_level": sim.education_level,
+                "profession_category": sim.profession_category,
+                "migration_goal": sim.migration_goal,
+                "target_country": sim.target_country,
+                "time_horizon_years": sim.time_horizon_years
+            },
+            "generated_at": sim.generated_at
+        })
+    
+    return {"simulations": result}
+
+@app.get("/api/simulation/{simulation_id}")
+async def get_simulation(simulation_id: str, db: Session = Depends(get_db)):
+    """
+    Get a specific simulation by ID
+    """
+    # Get simulation
+    sim = db.query(DBSimulation).filter(DBSimulation.simulation_id == simulation_id).first()
+    if not sim:
+        raise HTTPException(status_code=404, detail="Simulation not found")
+    
+    # Get timeline phases
+    phases = db.query(DBTimelinePhase)\
+        .filter(DBTimelinePhase.simulation_id == simulation_id)\
+        .order_by(DBTimelinePhase.phase_order)\
+        .all()
+    
+    timeline = [
+        TimelinePhase(
+            phase_name=p.phase_name,
+            start_year=p.start_year,
+            end_year=p.end_year,
+            visa_or_status=p.visa_or_status,
+            risk_level=p.risk_level,
+            key_constraints=p.key_constraints,
+            explanation=p.explanation
+        ) for p in phases
+    ]
+    
+    return {
+        "simulation_id": sim.simulation_id,
+        "target_country": sim.target_country,
+        "timeline": timeline,
+        "intake_data": {
+            "passport": sim.passport,
+            "age_bracket": sim.age_bracket,
+            "education_level": sim.education_level,
+            "profession_category": sim.profession_category,
+            "migration_goal": sim.migration_goal,
+            "target_country": sim.target_country,
+            "time_horizon_years": sim.time_horizon_years
+        },
+        "generated_at": sim.generated_at
+    }
+
 # =============================================================================
 # RUN SERVER
 # =============================================================================

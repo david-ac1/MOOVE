@@ -36,6 +36,8 @@ export default function IntakePage() {
       const session = await api.intake.start();
       console.log('✅ Session started:', session);
       setSessionId(session.session_id);
+      // Store session ID in localStorage for simulator page
+      localStorage.setItem('intake_session_id', session.session_id);
       setMessages([{
         role: 'assistant',
         content: session.message,
@@ -101,6 +103,12 @@ export default function IntakePage() {
 
   const progressPercentage = Math.min((messages.filter(m => m.role === 'user').length / 8) * 100, 100);
 
+  const handleViewSimulation = () => {
+    if (sessionId) {
+      window.location.href = `/simulator?session_id=${sessionId}`;
+    }
+  };
+
   return (
     <div className="layout-container flex h-screen flex-col bg-white text-slate-900">
       <header className="flex items-center justify-between whitespace-nowrap border-b-4 border-black bg-white px-8 py-4 z-20">
@@ -133,12 +141,12 @@ export default function IntakePage() {
           </nav>
           <div className="h-8 w-px bg-black/10"></div>
           {simulationReady ? (
-            <Link href="/simulator">
-              <button className="flex min-w-[140px] cursor-pointer items-center justify-center gap-2 rounded-2xl h-12 px-6 bg-green-500 text-white text-sm font-black uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] border-2 border-black hover:translate-y-[-2px] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all animate-pulse">
-                <span>See Pathways</span>
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </button>
-            </Link>
+            <button 
+              onClick={handleViewSimulation}
+              className="flex min-w-[140px] cursor-pointer items-center justify-center gap-2 rounded-2xl h-12 px-6 bg-green-500 text-white text-sm font-black uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] border-2 border-black hover:translate-y-[-2px] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all animate-pulse">
+              <span>See Pathways</span>
+              <span className="material-symbols-outlined">arrow_forward</span>
+            </button>
           ) : (
             <button 
               onClick={startSession}
