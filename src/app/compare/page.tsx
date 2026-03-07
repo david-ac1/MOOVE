@@ -62,12 +62,22 @@ export default function ComparePage() {
     setGeneratingFor(countryCode);
 
     try {
-      console.log(`🔵 Generating simulation for ${countryCode}...`);
-      // The simulator will automatically generate or load the simulation for this country
-      // We just navigate to it with the session_id
-      window.location.href = `/simulator?session_id=${sid}&country=${countryCode}`;
+      console.log(`🔵 Generating simulation for ${countryCode} with session ${sid}...`);
+      
+      // Generate simulation for this specific country (overriding the original target)
+      const simulation = await api.simulateFromSession(sid, countryCode);
+      
+      console.log(`✅ Simulation generated for ${countryCode}:`, simulation);
+      console.log(`📍 Target country in simulation: ${simulation.target_country}`);
+      
+      // Add a small delay to ensure the database transaction is committed
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Navigate to simulator to view the new simulation with a cache-busting parameter
+      window.location.href = `/simulator?session_id=${sid}&refresh=${Date.now()}`;
     } catch (err) {
-      console.error('Error:', err);
+      console.error('Error generating simulation:', err);
+      alert(`Failed to generate simulation: ${err instanceof Error ? err.message : 'Unknown error'}`);
       setGeneratingFor(null);
     }
   };

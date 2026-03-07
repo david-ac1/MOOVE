@@ -635,9 +635,14 @@ def _extract_data_from_conversation(conversation_text: str) -> Dict[str, Any]:
     return data
 
 @app.post("/api/simulate/from-session/{session_id}")
-async def simulate_from_session(session_id: str, db: Session = Depends(get_db)):
+async def simulate_from_session(
+    session_id: str, 
+    target_country_override: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
     """
-    Generate a simulation by extracting intake data from conversation history
+    Generate a simulation by extracting intake data from conversation history.
+    Optional target_country_override parameter allows generating simulations for alternative countries.
     """
     import json
     
@@ -701,6 +706,12 @@ Return ONLY the JSON object. No explanations, no markdown, no code blocks."""
         intake_data_dict = json.loads(cleaned_json)
         intake_data = IntakeData(**intake_data_dict)
         
+        # Override target country if provided (for alternative country simulations)
+        if target_country_override:
+            print(f"🔄 Overriding target country from {intake_data.target_country} to {target_country_override}")
+            intake_data.target_country = target_country_override
+            intake_data_dict['target_country'] = target_country_override
+        
         # Update collected_data in session
         db_session.collected_data = intake_data_dict
         db.commit()
@@ -713,6 +724,13 @@ Return ONLY the JSON object. No explanations, no markdown, no code blocks."""
         try:
             intake_data_dict = _extract_data_from_conversation(conversation_text)
             intake_data = IntakeData(**intake_data_dict)
+            
+            # Override target country if provided (for alternative country simulations)
+            if target_country_override:
+                print(f"🔄 Overriding target country from {intake_data.target_country} to {target_country_override}")
+                intake_data.target_country = target_country_override
+                intake_data_dict['target_country'] = target_country_override
+            
             db_session.collected_data = intake_data_dict
             db.commit()
             print(f"Successfully extracted data using fallback method")

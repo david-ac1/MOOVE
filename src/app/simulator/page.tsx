@@ -105,8 +105,15 @@ export default function SimulatorPage() {
       try {
         const response = await api.getSimulationsBySession(sid);
         if (response.simulations && response.simulations.length > 0) {
-          console.log('✅ Found existing simulation:', response.simulations[0]);
-          setSimulation(response.simulations[0]);
+          // Get the most recent simulation (should be first due to ORDER BY created_at DESC)
+          const mostRecent = response.simulations[0];
+          console.log('✅ Found existing simulations:', response.simulations.length);
+          console.log('📍 Loading most recent simulation:', {
+            id: mostRecent.simulation_id,
+            country: mostRecent.target_country,
+            generatedAt: mostRecent.generated_at
+          });
+          setSimulation(mostRecent);
           setIsLoading(false);
           return;
         }

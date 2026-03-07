@@ -146,9 +146,15 @@ export const api = {
 
   /**
    * Generate simulation from an intake session
+   * @param targetCountryOverride - Optional country code to generate simulation for an alternative country
    */
-  simulateFromSession: async (sessionId: string): Promise<SimulationResponse> => {
-    const res = await fetch(`${API_BASE_URL}/api/simulate/from-session/${sessionId}`, {
+  simulateFromSession: async (sessionId: string, targetCountryOverride?: string): Promise<SimulationResponse> => {
+    const url = new URL(`${API_BASE_URL}/api/simulate/from-session/${sessionId}`);
+    if (targetCountryOverride) {
+      url.searchParams.append('target_country_override', targetCountryOverride);
+    }
+    
+    const res = await fetch(url.toString(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     });
