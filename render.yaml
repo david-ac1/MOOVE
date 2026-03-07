@@ -3,7 +3,6 @@ services:
   - type: web
     name: moove-backend
     runtime: python
-    pythonVersion: "3.12.4"
     region: oregon
     plan: free
     branch: main
