@@ -39,6 +39,34 @@ export interface Country {
   flag: string;
 }
 
+export interface PathwayComparison {
+  country_code: string;
+  country_name: string;
+  pathway_name: string;
+  success_rate: number;
+  risk_level: 'low' | 'moderate' | 'high';
+  processing_time: string;
+  key_advantages: string[];
+  key_challenges: string[];
+  estimated_cost_usd: number;
+  is_recommended: boolean;
+  fit_score: number;
+}
+
+export interface ComparisonResponse {
+  session_id: string;
+  intake_data: {
+    passport: string;
+    age_bracket: string;
+    education_level: string;
+    profession_category: string;
+    migration_goal: string;
+    target_country: string;
+    time_horizon_years: number;
+  };
+  comparisons: PathwayComparison[];
+}
+
 // API client
 export const api = {
   /**
@@ -155,6 +183,21 @@ export const api = {
   getCountries: async (): Promise<{ countries: Country[] }> => {
     const res = await fetch(`${API_BASE_URL}/api/countries`);
     if (!res.ok) throw new Error('Failed to get countries');
+    return res.json();
+  },
+
+  /**
+   * Get personalized pathway comparisons from session
+   */
+  comparePathwaysFromSession: async (sessionId: string): Promise<ComparisonResponse> => {
+    const res = await fetch(`${API_BASE_URL}/api/compare/from-session/${sessionId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ detail: 'Unknown error' }));
+      throw new Error(error.detail || 'Failed to generate comparisons');
+    }
     return res.json();
   },
 };
