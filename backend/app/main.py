@@ -162,8 +162,8 @@ class InterviewerAgent:
             .order_by(ConversationMessage.timestamp)\
             .all()
         
-        # Build messages for AI
-        messages = [{"role": "user", "content": self.system_prompt}]
+        # Build messages for AI - System message first, then conversation
+        messages = [{"role": "system", "content": self.system_prompt}]
         messages += [{"role": msg.role, "content": msg.content} for msg in conversation_history]
         
         # Get AI response

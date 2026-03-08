@@ -120,11 +120,23 @@ class GradientAIClient:
         client = AsyncAnthropic(api_key=self.anthropic_key)
         
         try:
+            # Extract system message if present
+            system_message = None
+            conversation_messages = []
+            
+            for msg in messages:
+                if msg.get("role") == "system":
+                    system_message = msg.get("content")
+                else:
+                    conversation_messages.append(msg)
+            
+            # Call Anthropic with proper format
             response = await client.messages.create(
                 model="claude-sonnet-4-20250514",
                 max_tokens=max_tokens,
                 temperature=temperature,
-                messages=messages
+                system=system_message if system_message else "You are a helpful assistant.",
+                messages=conversation_messages if conversation_messages else [{"role": "user", "content": "Hello"}]
             )
             
             return response.content[0].text
