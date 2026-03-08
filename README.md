@@ -4,6 +4,7 @@
 
 > Map your future before it happens. The world's first AI-powered migration simulator for high-fidelity planning of cross-border journeys.
 
+[![DigitalOcean](https://img.shields.io/badge/DigitalOcean-Gradient%E2%84%A2%20AI-0080FF?style=flat&logo=digitalocean)](https://www.digitalocean.com/products/ai-ml)
 [![Next.js](https://img.shields.io/badge/Next.js-16.1.6-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Python](https://img.shields.io/badge/Python-3.12+-blue?style=flat&logo=python)](https://www.python.org/)
@@ -47,13 +48,30 @@
 
 ---
 
+## 🌊 Powered by DigitalOcean Gradient™ AI
+
+> **🏆 Hackathon Project:** This application is built for the DigitalOcean Hackathon and **requires** DigitalOcean Gradient™ AI to function.
+
+**Moove uses DigitalOcean Gradient™ AI for:**
+- 🤖 Conversational intake agent interactions
+- 🧠 Migration pathway analysis and recommendations
+- 📊 Timeline generation and risk assessment
+- 💡 Smart alternative pathway suggestions
+
+**Setup Guide:** See [DIGITALOCEAN_SETUP.md](DIGITALOCEAN_SETUP.md) for detailed configuration instructions.
+
+**Fallback:** Anthropic Claude API can be used for local testing, but DigitalOcean Gradient™ AI is required for production deployment and hackathon submission.
+
+---
+
 ## ✨ Features
 
 ### 🤖 AI-Powered Intake Agent
 - Conversational AI agent conducts structured interviews
 - Collects normalized data: passport, age, education, profession, goals
 - No free-text essays - all inputs are structured
-- Powered by Claude (Anthropic) or Gradient AI
+- **Powered by DigitalOcean Gradient™ AI** (required for production)
+- Anthropic Claude fallback available for local development
 
 ### 📊 Migration Timeline Simulator
 - Multi-year migration pathway visualization (5–15 years)
@@ -92,7 +110,7 @@
 - **Language:** Python 3.12+
 - **Database:** PostgreSQL with SQLAlchemy 2.0
 - **Migrations:** Alembic 1.14.0
-- **AI Integration:** Anthropic Claude API / Gradient AI
+- **AI Integration:** DigitalOcean Gradient™ AI (primary) / Anthropic Claude (dev fallback)
 - **Validation:** Pydantic 2.10
 
 ### Infrastructure
@@ -111,8 +129,8 @@
 - **Python** 3.12+
 - **PostgreSQL** (for production) or SQLite (for development)
 - **API Keys:**
-  - Anthropic API key (for Claude) OR
-  - Gradient AI API key (via DigitalOcean)
+  - **DigitalOcean Gradient™ AI API key** (REQUIRED for production/hackathon)
+  - Anthropic API key (optional, for local testing only)
 
 ### 1. Clone Repository
 
@@ -146,8 +164,10 @@ cp ../.env.example .env
 # Edit .env and add your API keys
 # Required:
 # - DATABASE_URL (or use default SQLite)
-# - ANTHROPIC_API_KEY or GRADIENT_API_KEY
+# - GRADIENT_AGENT_ACCESS_KEY (DigitalOcean Gradient AI - REQUIRED)
 # - CORS_ORIGINS (default: http://localhost:3000)
+# Optional for local dev:
+# - ANTHROPIC_API_KEY (fallback for testing)
 
 # Run database migrations
 alembic upgrade head
@@ -356,14 +376,17 @@ Response: 200 OK
 1. Connect GitHub repository
 2. Render auto-detects `render.yaml`
 3. Add environment variables:
-   - `ANTHROPIC_API_KEY` or `GRADIENT_API_KEY`
+   - `GRADIENT_AGENT_ACCESS_KEY` (DigitalOcean Gradient AI)
+   - `GRADIENT_AGENT_ENDPOINT`
    - `CORS_ORIGINS`
 4. Deploy
 
 ### Detailed Guides
 - See [DEPLOYMENT.md](DEPLOYMENT.md) for comprehensive deployment instructions
 - See [QUICK_START.md](QUICK_START.md) for 30-minute setup guide
-- See [DIGITALOCEAN_SETUP.md](DIGITALOCEAN_SETUP.md) for DigitalOcean deployment
+- See [DIGITALOCEAN_SETUP.md](DIGITALOCEAN_SETUP.md) for **DigitalOcean Gradient™ AI setup** (REQUIRED)
+
+> ⚠️ **Hackathon Requirement:** This project MUST use DigitalOcean Gradient™ AI to be eligible for judging. See [DIGITALOCEAN_SETUP.md](DIGITALOCEAN_SETUP.md) for setup instructions.
 
 ---
 
@@ -380,9 +403,13 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 DATABASE_URL=sqlite:///./moove.db  # Development
 # DATABASE_URL=postgresql://user:pass@host:5432/moove  # Production
 
-# AI Provider (choose one)
-ANTHROPIC_API_KEY=sk-ant-...
-# GRADIENT_API_KEY=your-gradient-key
+# DigitalOcean Gradient™ AI (REQUIRED for production/hackathon)
+GRADIENT_AGENT_ENDPOINT=https://your-agent-url.gradient.ai
+GRADIENT_AGENT_ACCESS_KEY=your-gradient-access-key
+DIGITALOCEAN_GRADIENT_API_KEY=dop_v1_...
+
+# Anthropic Claude (OPTIONAL - local development/testing only)
+# ANTHROPIC_API_KEY=sk-ant-...
 
 # CORS
 CORS_ORIGINS=http://localhost:3000,https://your-app.vercel.app
@@ -451,7 +478,8 @@ For questions, issues, or contributions:
 
 ## 🙏 Acknowledgments
 
-- Built with [Next.js](https://nextjs.org/), [FastAPI](https://fastapi.tiangolo.com/), and [Claude AI](https://www.anthropic.com/)
+- **AI Powered by [DigitalOcean Gradient™ AI](https://www.digitalocean.com/products/ai-ml)**
+- Built with [Next.js](https://nextjs.org/) and [FastAPI](https://fastapi.tiangolo.com/)
 - Deployed on [Vercel](https://vercel.com/) and [Render](https://render.com/)
 - Migration data compiled from official government sources
 
